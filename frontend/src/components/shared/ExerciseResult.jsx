@@ -91,7 +91,6 @@ const ExerciseResult = ({
         "quick-warmup": "Швидка розминка",
         "intensive-mode": "Інтенсивний режим",
         "knowledge-marathon": "Марафон знань",
-        "mixed-practice": "Міксована практика",
     };
 
     const exerciseName = exerciseNames[results.exerciseType] || "Практика";
@@ -160,18 +159,6 @@ const ExerciseResult = ({
                 return "Марафон завершено! Ви показали хорошу стійкість у навчанні.";
             } else {
                 return "Марафон знань завершено! Довга практика розвиває концентрацію.";
-            }
-        }
-
-        if (results.exerciseType === "mixed-practice") {
-            if (percentage >= 90) {
-                return "Фантастично! Ви відмінно впоралися з міксованою практикою!";
-            } else if (percentage >= 70) {
-                return "Чудово! Різноманітні вправи показали ваш високий рівень.";
-            } else if (percentage >= 50) {
-                return "Добра робота! Міксована практика допомагає комплексному розвитку.";
-            } else {
-                return "Міксована практика завершена! Різні типи вправ розвивають всі навички.";
             }
         }
 
@@ -388,12 +375,9 @@ const ExerciseResult = ({
                                 ? "Інтенсивний режим завершено!"
                                 : results.exerciseType === "knowledge-marathon"
                                   ? "Марафон знань завершено!"
-                                  : results.exerciseType === "mixed-practice"
-                                    ? "Міксовану практику завершено!"
-                                    : results.exerciseType ===
-                                        "listen-and-choose"
-                                      ? "Вправу прослухати та обрати завершено!" // ДОДАНО
-                                      : "Вправу завершено!"}
+                                  : results.exerciseType === "listen-and-choose"
+                                    ? "Вправу прослухати та обрати завершено!" // ДОДАНО
+                                    : "Вправу завершено!"}
                     </h2>
                     <p className="text-xl text-white/90">{finalMessage}</p>
                 </div>
@@ -830,12 +814,9 @@ const ExerciseResult = ({
                                 ? "Новий інтенсив"
                                 : results.exerciseType === "knowledge-marathon"
                                   ? "Новий марафон"
-                                  : results.exerciseType === "mixed-practice"
-                                    ? "Нова практика"
-                                    : results.exerciseType ===
-                                        "listen-and-choose"
-                                      ? "Спробувати ще раз"
-                                      : "Спробувати ще раз"}
+                                  : results.exerciseType === "listen-and-choose"
+                                    ? "Спробувати ще раз"
+                                    : "Спробувати ще раз"}
                     </button>
                 </div>
             </div>

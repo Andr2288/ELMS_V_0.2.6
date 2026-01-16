@@ -410,7 +410,6 @@ const server = app.listen(PORT, () => {
     logger.info("  ✓ Швидка розминка: миттєво");
     logger.info("  ✓ Інтенсивний режим: миттєво");
     logger.info("  ✓ Марафон знань: миттєво");
-    logger.info("  ✓ Міксована практика: миттєво");
 
     logger.info("🧠 РОЗУМНА СИСТЕМА:");
     logger.info("  ✓ Пріоритизація: Learning > Review");

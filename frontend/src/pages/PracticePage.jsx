@@ -620,14 +620,12 @@ const PracticePage = () => {
                         "quick-warmup",
                         "intensive-mode",
                         "knowledge-marathon",
-                        "mixed-practice",
                     ].includes(exerciseType)
                 ) {
                     const cardCounts = {
                         "quick-warmup": 10,
                         "intensive-mode": 20,
                         "knowledge-marathon": 30,
-                        "mixed-practice": 15,
                     };
 
                     const requiredCount = cardCounts[exerciseType];
@@ -1604,7 +1602,6 @@ const PracticePage = () => {
                 "quick-warmup": "from-emerald-500 to-teal-500",
                 "intensive-mode": "from-purple-600 to-pink-600",
                 "knowledge-marathon": "from-indigo-600 to-purple-600",
-                "mixed-practice": "from-blue-500 to-purple-600",
                 "multiple-choice": "from-purple-600 to-pink-600",
                 "sentence-completion": "from-emerald-500 to-teal-500",
                 "listen-and-fill": "from-blue-400 to-cyan-500",
@@ -2009,78 +2006,6 @@ const PracticePage = () => {
                                         </div>
                                     );
                                 })}
-                            </div>
-                        </div>
-
-                        {/* Рекомендація дня (Міксована практика) */}
-                        <div>
-                            <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                                <Lightbulb className="w-5 h-5 mr-2 text-blue-500" />
-                                Рекомендація дня
-                            </h3>
-                            <div className="bg-gradient-to-t from-blue-500 to-purple-600 rounded-2xl p-8 text-white shadow-md">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <h4 className="text-2xl font-bold mb-2">
-                                            Міксована практика
-                                        </h4>
-                                        <p className="text-blue-100 mb-4">
-                                            Комбінація різних типів вправ для
-                                            максимального ефекту
-                                        </p>
-                                        <div className="flex items-center space-x-4 text-sm">
-                                            <div className="flex items-center">
-                                                <Timer className="w-4 h-4 mr-1" />
-                                                10-15 хв
-                                            </div>
-                                            <div className="flex items-center">
-                                                <BookOpen className="w-4 h-4 mr-1" />
-                                                15 карток
-                                            </div>
-                                            <div className="flex items-center">
-                                                <TrendingUp className="w-4 h-4 mr-1" />
-                                                Всі типи вправ
-                                            </div>
-                                        </div>
-                                        {/* ДОДАНО: Індикатор доступних вправ */}
-                                        <div className="mt-2 text-sm opacity-80">
-                                            {
-                                                categoryExercisesList.filter(
-                                                    (ex) => !ex.isCompleted
-                                                ).length
-                                            }{" "}
-                                            валідних вправ доступно
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() =>
-                                            !isProcessing &&
-                                            !isRestarting &&
-                                            handleExerciseClick(
-                                                "mixed-practice"
-                                            )
-                                        }
-                                        disabled={
-                                            categoryExercisesList.filter(
-                                                (ex) => !ex.isCompleted
-                                            ).length < 15 ||
-                                            isProcessing ||
-                                            isRestarting
-                                        }
-                                        className={`bg-white/10 hover:bg-white/20 disabled:bg-white/10 text-white px-14 py-4 rounded-xl font-semibold transition-all duration-200 flex items-center ${
-                                            isProcessing ||
-                                            isRestarting ||
-                                            categoryExercisesList.filter(
-                                                (ex) => !ex.isCompleted
-                                            ).length < 15
-                                                ? "disabled:cursor-not-allowed"
-                                                : "cursor-pointer"
-                                        }`}
-                                    >
-                                        Почати
-                                        <Play className="w-5 h-5 ml-2" />
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </div>
