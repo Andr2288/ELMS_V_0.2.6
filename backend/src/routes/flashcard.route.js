@@ -70,11 +70,4 @@ router.post(
     flashcardController.resetWordProgress
 );
 
-// ДОДАНО: Новий endpoint для оновлення карток до останньої версії
-router.post(
-    "/migrate-to-latest",
-    authMiddleware.protectRoute,
-    flashcardController.migrateFlashcardsToLatestVersion
-);
-
 export default router;

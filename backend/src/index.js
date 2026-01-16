@@ -242,7 +242,6 @@ app.get("/api/health", (req, res) => {
             learning_system: "enabled", // Повна система навчання
             core_exercises: "enabled", // sentence-completion, multiple-choice, listen-and-fill, listen-and-choose
             additional_exercises: "enabled", // dialog, reading-comprehension
-            flashcard_migration: "enabled", // Підтримка міграції карток
             rate_limiting: "enabled",
             security_headers: "enabled",
             // ДОДАНО: Нові функції оптимізації
@@ -443,7 +442,6 @@ const server = app.listen(PORT, () => {
     logger.info("    • dialog");
     logger.info("    • reading-comprehension");
 
-    logger.info("- Flashcard migration to latest version");
     logger.info("- Performance monitoring");
     logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 

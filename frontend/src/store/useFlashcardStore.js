@@ -568,29 +568,6 @@ export const useFlashcardStore = create((set, get) => ({
         }
     },
 
-    migrateFlashcardsToLatestVersion: async () => {
-        try {
-            const res = await axiosInstance.post(
-                "/flashcards/migrate-to-latest"
-            );
-
-            await get().getFlashcards(get().currentCategoryFilter);
-
-            toast.success(res.data.message, {
-                duration: 5000,
-                position: "top-center",
-            });
-
-            return res.data;
-        } catch (error) {
-            console.error("Error migrating flashcards:", error);
-            const message =
-                error.response?.data?.message || "Помилка оновлення карток";
-            toast.error(message);
-            throw error;
-        }
-    },
-
     // Filter functions
     setCategoryFilter: (categoryId) => {
         set({ currentCategoryFilter: categoryId });
