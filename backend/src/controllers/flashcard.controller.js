@@ -273,7 +273,6 @@ const handleExerciseResult = async (req, res) => {
             "multiple-choice",
             "listen-and-fill",
             "listen-and-choose",
-            "dialog",
             "reading-comprehension",
         ];
         if (!validExerciseTypes.includes(exerciseType)) {
@@ -351,36 +350,6 @@ const handleExerciseResult = async (req, res) => {
                         flashcard.isReadingComprehensionExercise,
                     lastReviewedAt: flashcard.lastReviewedAt,
                 });
-            } else if (exerciseType === "dialog") {
-                // Просто оновлюємо дату останнього повторення
-                flashcard.lastReviewedAt = new Date();
-                progressChanged = true;
-
-                if (progressChanged) {
-                    await flashcard.save();
-                }
-
-                processedWords.push({
-                    _id: flashcard._id,
-                    text: flashcard.text,
-                    status: flashcard.status,
-                    progressInfo: flashcard.getProgressInfo(),
-                    wasUpdated: progressChanged,
-                    isSentenceCompletionExercise:
-                        flashcard.isSentenceCompletionExercise,
-                    isMultipleChoiceExercise:
-                        flashcard.isMultipleChoiceExercise,
-                    isListenAndFillExercise: flashcard.isListenAndFillExercise,
-                    isListenAndChooseExercise:
-                        flashcard.isListenAndChooseExercise,
-                    isReadingComprehensionExercise:
-                        flashcard.isReadingComprehensionExercise,
-                    lastReviewedAt: flashcard.lastReviewedAt,
-                });
-
-                console.log(
-                    `Interactive dialog completed for word: ${flashcard.text}`
-                );
             } else if (isCorrect) {
                 // Обробляємо правильну відповідь для основних вправ
                 if (
@@ -492,8 +461,6 @@ const handleExerciseResult = async (req, res) => {
             } else {
                 resultMessage = `Неправильна відповідь. Читайте уважніше. Опрацьовано ${processedWords.length} слів.`;
             }
-        } else if (exerciseType === "dialog") {
-            resultMessage = `Інтерактивний діалог завершено! Ви покращили навички читання. Опрацьовано ${processedWords.length} слів.`;
         } else if (isCorrect) {
             const mainWord = processedWords[0];
             if (mainWord) {

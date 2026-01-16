@@ -42,7 +42,7 @@ router.post(
 );
 
 // Отримання слів для конкретної вправи (підтримує всі типи: основні та додаткові)
-// ОНОВЛЕНО: Підтримувані типи: sentence-completion, multiple-choice, listen-and-fill, listen-and-choose, dialog, reading-comprehension
+// ОНОВЛЕНО: Підтримувані типи: sentence-completion, multiple-choice, listen-and-fill, listen-and-choose, reading-comprehension
 router.get(
     "/exercise/:exerciseType",
     authMiddleware.protectRoute,

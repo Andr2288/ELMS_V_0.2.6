@@ -419,7 +419,6 @@ const server = app.listen(PORT, () => {
 
     logger.info("🌐 МЕРЕЖЕВІ ВПРАВИ:");
     logger.info("  ✓ Reading Comprehension: ~2-5s");
-    logger.info("  ✓ Інтерактивний діалог: ~2-5s");
 
     logger.info("📊 ПІДТРИМУВАНІ ФУНКЦІЇ:");
     logger.info("- Security headers (Helmet)");
@@ -432,14 +431,13 @@ const server = app.listen(PORT, () => {
     logger.info("- Advanced TTS configuration");
     logger.info("- AI-powered flashcard generation");
 
-    logger.info("🎯 СИСТЕМА ВПРАВ (6 типів):");
+    logger.info("🎯 СИСТЕМА ВПРАВ (5 типів):");
     logger.info("  ⚡ Основні (миттєве завантаження):");
     logger.info("    • sentence-completion");
     logger.info("    • multiple-choice");
     logger.info("    • listen-and-fill");
     logger.info("    • listen-and-choose");
     logger.info("  🌐 Додаткові (мережеве завантаження):");
-    logger.info("    • dialog");
     logger.info("    • reading-comprehension");
 
     logger.info("- Performance monitoring");

@@ -9,7 +9,6 @@ import {
     generateRegenerateExamplesPrompt,
     getRandomTextType,
     getRandomSentenceType,
-    getRandomDialogType,
 } from "../services/prompts.js";
 
 // Константи для таймаутів
@@ -126,10 +125,6 @@ const generateFlashcardContent = async (req, res) => {
             const selectedSentenceType = getRandomSentenceType();
             console.log(`🎤 Selected Sentence Type: ${selectedSentenceType}`);
         }
-        if (promptType === "dialog") {
-            const selectedDialogType = getRandomDialogType();
-            console.log(`💬 Selected Dialog Type: ${selectedDialogType}`);
-        }
         if (categoryContext) {
             console.log(`📁 Category Context: Used`);
         } else {
@@ -156,7 +151,7 @@ const generateFlashcardContent = async (req, res) => {
                             {
                                 role: "system",
                                 content:
-                                    "You are a helpful assistant for language learning, specializing in English and Ukrainian. Always follow the exact structure requirements provided in the prompts. For dialog exercises, use the exact structure with dialog.start, not replika1. For reading comprehension, use ALL provided words exactly as given and follow the specified text type format. For listening exercises, create sentences that match the specified sentence type style. For dialog exercises, create conversations that match the specified dialog type context and tone.",
+                                    "You are a helpful assistant for language learning, specializing in English and Ukrainian. Always follow the exact structure requirements provided in the prompts. For reading comprehension, use ALL provided words exactly as given and follow the specified text type format. For listening exercises, create sentences that match the specified sentence type style.",
                             },
                             { role: "user", content: prompt },
                         ],
@@ -633,134 +628,6 @@ const generateFlashcardContent = async (req, res) => {
         return res.status(error.status || 500).json(errorResponse);
     }
 };
-
-// Функція валідації структури діалогу
-function validateDialogStructure(dialog) {
-    try {
-        // Перевірка основної структури
-        if (!dialog || typeof dialog !== "object") {
-            return { valid: false, error: "Dialog must be an object" };
-        }
-
-        // Перевірка usedWords
-        if (!Array.isArray(dialog.usedWords)) {
-            return { valid: false, error: "usedWords must be an array" };
-        }
-
-        if (dialog.usedWords.length < 3) {
-            return {
-                valid: false,
-                error: `Must use at least 3 words, got ${dialog.usedWords.length}`,
-            };
-        }
-
-        // Перевірка що всі слова не порожні
-        for (const word of dialog.usedWords) {
-            if (!word || typeof word !== "string" || word.trim().length === 0) {
-                return {
-                    valid: false,
-                    error: "All used words must be non-empty strings",
-                };
-            }
-        }
-
-        // Перевірка dialogType
-        if (!dialog.dialogType || typeof dialog.dialogType !== "string") {
-            console.warn("Missing or invalid dialogType, validation continues");
-        }
-
-        // Перевірка dialog структури
-        if (!dialog.dialog) {
-            return { valid: false, error: "Missing dialog structure" };
-        }
-
-        // Підтримка обох структур - start та replika1
-        let dialogStart = null;
-        if (dialog.dialog.start) {
-            dialogStart = dialog.dialog.start;
-            console.log("✅ Found dialog.start structure");
-        } else if (dialog.dialog.replika1) {
-            dialogStart = dialog.dialog.replika1;
-            console.log(
-                "✅ Found dialog.replika1 structure - converting to start"
-            );
-
-            // Конвертуємо replika1 в start структуру
-            dialog.dialog.start = dialogStart;
-            delete dialog.dialog.replika1;
-        } else {
-            return {
-                valid: false,
-                error: "Missing dialog.start or dialog.replika1 structure",
-            };
-        }
-
-        // Перевірка початкової репліки
-        if (!dialogStart.speaker || !dialogStart.text) {
-            return { valid: false, error: "Start must have speaker and text" };
-        }
-
-        // Перевірка альтернатив
-        if (!Array.isArray(dialogStart.alternatives)) {
-            return {
-                valid: false,
-                error: "Start must have alternatives array",
-            };
-        }
-
-        if (dialogStart.alternatives.length < 1) {
-            return {
-                valid: false,
-                error: "Start must have at least 1 alternative",
-            };
-        }
-
-        // Гнучка валідація: перевіряємо лише що є альтернативи та next структури
-        for (let i = 0; i < dialogStart.alternatives.length; i++) {
-            const alt = dialogStart.alternatives[i];
-
-            if (!alt.speaker || !alt.text) {
-                return {
-                    valid: false,
-                    error: `Alternative ${i} must have speaker and text`,
-                };
-            }
-
-            if (!alt.next) {
-                return {
-                    valid: false,
-                    error: `Alternative ${i} must have next object`,
-                };
-            }
-
-            if (!alt.next.speaker || !alt.next.text) {
-                return {
-                    valid: false,
-                    error: `Alternative ${i}.next must have speaker and text`,
-                };
-            }
-
-            // Якщо є вкладені альтернативи, перевіряємо їх базову структуру
-            if (alt.next.alternatives && Array.isArray(alt.next.alternatives)) {
-                for (let j = 0; j < alt.next.alternatives.length; j++) {
-                    const nestedAlt = alt.next.alternatives[j];
-
-                    if (!nestedAlt.speaker || !nestedAlt.text) {
-                        return {
-                            valid: false,
-                            error: `Nested alternative ${i}-${j} must have speaker and text`,
-                        };
-                    }
-                }
-            }
-        }
-
-        console.log("✅ Dialog structure validation passed");
-        return { valid: true };
-    } catch (error) {
-        return { valid: false, error: `Validation error: ${error.message}` };
-    }
-}
 
 // Регенерація прикладів
 const regenerateExamples = async (req, res) => {

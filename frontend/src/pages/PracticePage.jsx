@@ -5,7 +5,6 @@ import MultipleChoiceExercise from "../components/exercises/MultipleChoiceExerci
 import ListenAndFillExercise from "../components/exercises/ListenAndFillExercise.jsx";
 import ListenAndChooseExercise from "../components/exercises/ListenAndChooseExercise.jsx";
 import SentenceCompletionExercise from "../components/exercises/SentenceCompletionExercise.jsx";
-import DialogExercise from "../components/exercises/DialogExercise.jsx";
 import ReadingComprehensionExercise from "../components/exercises/ReadingComprehensionExercise.jsx";
 import ExerciseResult from "../components/shared/ExerciseResult.jsx";
 import {
@@ -29,7 +28,6 @@ import {
     Lightbulb,
     Timer,
     Trophy,
-    MessageCircle,
     FileText,
     Layers,
 } from "lucide-react";
@@ -1549,24 +1547,6 @@ const PracticePage = () => {
 
     const advancedExercisesData = [
         {
-            id: "dialog",
-            title: "Інтерактивний діалог",
-            description: "Створіть свій шлях у розмові та покращте читання",
-            icon: MessageCircle,
-            color: "from-indigo-500 to-purple-500",
-            difficulty: "Легкий",
-            difficultyColor: "text-green-600",
-            difficultyBg: "bg-green-600",
-            time: "3-5 хв (3 питання)",
-            minCards: 3,
-            category: "advanced",
-            features: [
-                "Інтерактивні рішення",
-                "Практика читання",
-                "Контекстне розуміння",
-            ],
-        },
-        {
             id: "reading-comprehension",
             title: "Розуміння прочитаного",
             description: "Прочитайте текст та оберіть правильний факт",
@@ -1730,19 +1710,6 @@ const PracticePage = () => {
                 case "listen-and-choose":
                     return (
                         <ListenAndChooseExercise
-                            rightOptionCard={currentQuestion.rightOptionCard}
-                            optionCards={currentQuestion.optionCards}
-                            onExit={handleQuestionResult}
-                            progress={progressData}
-                            isLastQuestion={isLastQuestion}
-                            onRestart={handleRestartExercise}
-                            isProcessing={isProcessing}
-                            onProgressUpdate={handleProgressUpdate}
-                        />
-                    );
-                case "dialog":
-                    return (
-                        <DialogExercise
                             rightOptionCard={currentQuestion.rightOptionCard}
                             optionCards={currentQuestion.optionCards}
                             onExit={handleQuestionResult}

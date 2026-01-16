@@ -12,7 +12,6 @@ import {
     BookOpen,
     Activity,
     Zap,
-    Flame,
     MessageCircle,
     FileText,
     ChevronDown,
@@ -21,12 +20,6 @@ import {
     Brain,
     Type,
     Headphones,
-    Eye,
-    Users,
-    Sparkles,
-    ArrowRight,
-    Layers,
-    AlertCircle,
     Volume2,
 } from "lucide-react";
 import { useState } from "react";
@@ -62,26 +55,17 @@ const ExerciseResult = ({
         );
     }
 
-    // Спеціальна логіка для інтерактивного діалогу
-    const isInteractiveDialog = results.exerciseType === "dialog";
-
     // Спеціальна логіка для reading comprehension
     const isReadingComprehension =
         results.exerciseType === "reading-comprehension";
 
     // Для інтерактивного діалогу "правильність" завжди 100%, оскільки немає помилок
-    const percentage = isInteractiveDialog
-        ? 100
-        : Math.round((results.correct / results.total) * 100);
+    const percentage = Math.round((results.correct / results.total) * 100);
 
     // Повідомлення для інтерактивного діалогу
     let message, icon;
 
-    if (isInteractiveDialog) {
-        message =
-            "Чудово! Ви успішно пройшли інтерактивний діалог і покращили навички читання!";
-        icon = MessageCircle;
-    } else if (percentage >= 90) {
+    if (percentage >= 90) {
         message = "Чудово! Ви досягли відмінного результату!";
         icon = Trophy;
     } else if (percentage >= 70) {
@@ -228,14 +212,6 @@ const ExerciseResult = ({
         if (progress >= 66) return "text-blue-600";
         if (progress >= 33) return "text-purple-600";
         return "text-pink-600";
-    };
-
-    // Функція для отримання назви категорії
-    const getCategoryDisplayName = (selectedCategory) => {
-        if (!selectedCategory || selectedCategory === "all")
-            return "всіх категорій";
-        if (selectedCategory === "uncategorized") return "без категорії";
-        return "";
     };
 
     // Підрахунок статистики для reading comprehension
@@ -404,23 +380,20 @@ const ExerciseResult = ({
                         <Icon className="w-16 h-16 mx-auto text-white" />
                     </div>
                     <h2 className="text-3xl font-bold mb-3">
-                        {results.exerciseType === "dialog"
-                            ? "Інтерактивний діалог завершено!"
-                            : results.exerciseType === "reading-comprehension"
-                              ? "Читання завершено!"
-                              : results.exerciseType === "quick-warmup"
-                                ? "Розминку завершено!"
-                                : results.exerciseType === "intensive-mode"
-                                  ? "Інтенсивний режим завершено!"
-                                  : results.exerciseType ===
-                                      "knowledge-marathon"
-                                    ? "Марафон знань завершено!"
-                                    : results.exerciseType === "mixed-practice"
-                                      ? "Міксовану практику завершено!"
-                                      : results.exerciseType ===
-                                          "listen-and-choose"
-                                        ? "Вправу прослухати та обрати завершено!" // ДОДАНО
-                                        : "Вправу завершено!"}
+                        {results.exerciseType === "reading-comprehension"
+                            ? "Читання завершено!"
+                            : results.exerciseType === "quick-warmup"
+                              ? "Розминку завершено!"
+                              : results.exerciseType === "intensive-mode"
+                                ? "Інтенсивний режим завершено!"
+                                : results.exerciseType === "knowledge-marathon"
+                                  ? "Марафон знань завершено!"
+                                  : results.exerciseType === "mixed-practice"
+                                    ? "Міксовану практику завершено!"
+                                    : results.exerciseType ===
+                                        "listen-and-choose"
+                                      ? "Вправу прослухати та обрати завершено!" // ДОДАНО
+                                      : "Вправу завершено!"}
                     </h2>
                     <p className="text-xl text-white/90">{finalMessage}</p>
                 </div>
@@ -428,104 +401,51 @@ const ExerciseResult = ({
 
             {/* Results */}
             <div className="p-8">
-                {/* Спеціальне відображення для інтерактивного діалогу */}
-                {isInteractiveDialog ? (
-                    <div className="flex justify-center items-center mb-8">
-                        <div className="relative w-48 h-48">
-                            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-100 to-purple-100"></div>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="text-center">
-                                    <Users className="w-16 h-16 text-indigo-600 mx-auto mb-3" />
-                                    <span className="text-4xl font-bold text-indigo-600">
-                                        100%
-                                    </span>
-                                    <p className="text-sm text-gray-500">
-                                        Завершено
-                                    </p>
-                                </div>
+                {/* Круговий прогрес */}
+                <div className="flex justify-center items-center mb-8">
+                    <div className="relative w-48 h-48">
+                        <div className="absolute inset-0 rounded-full bg-gray-100"></div>
+                        <svg
+                            className="absolute inset-0 w-full h-full"
+                            viewBox="0 0 100 100"
+                        >
+                            <circle
+                                className="text-gray-200"
+                                strokeWidth="10"
+                                stroke="currentColor"
+                                fill="transparent"
+                                r="40"
+                                cx="50"
+                                cy="50"
+                            />
+                            <circle
+                                className={`${percentage >= 70 ? "text-green-500" : percentage >= 50 ? "text-blue-500" : "text-purple-500"}`}
+                                strokeWidth="10"
+                                strokeDasharray={`${percentage * 2.51}, 251`}
+                                strokeLinecap="round"
+                                stroke="currentColor"
+                                fill="transparent"
+                                r="40"
+                                cx="50"
+                                cy="50"
+                            />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="text-center">
+                                <span className="text-4xl font-bold">
+                                    {percentage}%
+                                </span>
+                                <p className="text-sm text-gray-500">
+                                    Успішність
+                                </p>
                             </div>
                         </div>
                     </div>
-                ) : (
-                    <div className="flex justify-center items-center mb-8">
-                        <div className="relative w-48 h-48">
-                            <div className="absolute inset-0 rounded-full bg-gray-100"></div>
-                            <svg
-                                className="absolute inset-0 w-full h-full"
-                                viewBox="0 0 100 100"
-                            >
-                                <circle
-                                    className="text-gray-200"
-                                    strokeWidth="10"
-                                    stroke="currentColor"
-                                    fill="transparent"
-                                    r="40"
-                                    cx="50"
-                                    cy="50"
-                                />
-                                <circle
-                                    className={`${percentage >= 70 ? "text-green-500" : percentage >= 50 ? "text-blue-500" : "text-purple-500"}`}
-                                    strokeWidth="10"
-                                    strokeDasharray={`${percentage * 2.51}, 251`}
-                                    strokeLinecap="round"
-                                    stroke="currentColor"
-                                    fill="transparent"
-                                    r="40"
-                                    cx="50"
-                                    cy="50"
-                                />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="text-center">
-                                    <span className="text-4xl font-bold">
-                                        {percentage}%
-                                    </span>
-                                    <p className="text-sm text-gray-500">
-                                        {isInteractiveDialog
-                                            ? "Завершено"
-                                            : "Успішність"}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                </div>
 
                 {/* Статистика */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    {isInteractiveDialog ? (
-                        <>
-                            <div className="bg-indigo-50 rounded-xl p-4 text-center">
-                                <MessageCircle className="w-8 h-8 text-indigo-500 mx-auto mb-2" />
-                                <p className="text-sm text-gray-600 mb-1">
-                                    Діалогових кроків
-                                </p>
-                                <p className="text-2xl font-bold text-indigo-600">
-                                    {results.total || 0}
-                                </p>
-                            </div>
-
-                            <div className="bg-purple-50 rounded-xl p-4 text-center">
-                                <Eye className="w-5 h-5 text-purple-500 mx-auto mb-2" />
-                                <p className="text-sm text-gray-600 mb-1">
-                                    Практика читання
-                                </p>
-                                <p className="text-lg font-bold text-purple-600">
-                                    Інтерактивна
-                                </p>
-                            </div>
-
-                            <div className="bg-green-50 rounded-xl p-4 text-center">
-                                <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                                <p className="text-sm text-gray-600 mb-1">
-                                    Статус
-                                </p>
-                                <p className="text-2xl font-bold text-green-600">
-                                    Завершено
-                                </p>
-                            </div>
-                        </>
-                    ) : results.exerciseType === "reading-comprehension" ? (
+                    {results.exerciseType === "reading-comprehension" ? (
                         <>
                             <div className="bg-emerald-50 rounded-xl p-4 text-center">
                                 <FileText className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
@@ -751,12 +671,6 @@ const ExerciseResult = ({
                                                                     </span>
                                                                 )
                                                             ) : wordProgress.exerciseType ===
-                                                              "dialog" ? (
-                                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                                                    <MessageCircle className="w-3 h-3 mr-1" />
-                                                                    Завершено
-                                                                </span>
-                                                            ) : wordProgress.exerciseType ===
                                                               "reading-comprehension" ? (
                                                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
                                                                     <FileText className="w-3 h-3 mr-1" />
@@ -846,7 +760,6 @@ const ExerciseResult = ({
                                                                     }`}
                                                                     title="Слухання та письмо"
                                                                 />
-                                                                {/* ДОДАНО: Індикатор для нової вправи */}
                                                                 <div
                                                                     className={`w-4 h-4 rounded-sm ${
                                                                         exercises.listenAndChoose
@@ -866,10 +779,6 @@ const ExerciseResult = ({
                                                                             : "bg-gray-200"
                                                                     }`}
                                                                     title="Розуміння прочитаного"
-                                                                />
-                                                                <div
-                                                                    className="w-4 h-4 rounded-sm bg-indigo-200"
-                                                                    title="Діалог (завжди доступний)"
                                                                 />
                                                             </div>
                                                         </td>
@@ -913,23 +822,20 @@ const ExerciseResult = ({
                         }`}
                     >
                         <RefreshCw className="w-5 h-5 mr-2" />
-                        {results.exerciseType === "dialog"
-                            ? "Новий діалог"
-                            : results.exerciseType === "reading-comprehension"
-                              ? "Нові тексти"
-                              : results.exerciseType === "quick-warmup"
-                                ? "Нова розминка"
-                                : results.exerciseType === "intensive-mode"
-                                  ? "Новий інтенсив"
-                                  : results.exerciseType ===
-                                      "knowledge-marathon"
-                                    ? "Новий марафон"
-                                    : results.exerciseType === "mixed-practice"
-                                      ? "Нова практика"
-                                      : results.exerciseType ===
-                                          "listen-and-choose"
-                                        ? "Спробувати ще раз" // ДОДАНО
-                                        : "Спробувати ще раз"}
+                        {results.exerciseType === "reading-comprehension"
+                            ? "Нові тексти"
+                            : results.exerciseType === "quick-warmup"
+                              ? "Нова розминка"
+                              : results.exerciseType === "intensive-mode"
+                                ? "Новий інтенсив"
+                                : results.exerciseType === "knowledge-marathon"
+                                  ? "Новий марафон"
+                                  : results.exerciseType === "mixed-practice"
+                                    ? "Нова практика"
+                                    : results.exerciseType ===
+                                        "listen-and-choose"
+                                      ? "Спробувати ще раз"
+                                      : "Спробувати ще раз"}
                     </button>
                 </div>
             </div>
