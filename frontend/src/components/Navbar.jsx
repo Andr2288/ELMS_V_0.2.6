@@ -1,18 +1,9 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore.js";
-import { useAchievementStore } from "../store/useAchievementStore.js";
-import {
-    LogOut,
-    Settings,
-    User,
-    BookOpen,
-    Target,
-    Sparkles,
-} from "lucide-react";
+import { LogOut, Settings, User, BookOpen, Target, Sparkles } from "lucide-react";
 
 const Navbar = () => {
     const { logout, authUser } = useAuthStore();
-    const { hasUnseenAchievements } = useAchievementStore();
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -61,9 +52,7 @@ const Navbar = () => {
                         <Sparkles className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-gray-900 text-xl font-bold">
-                            FlashCard
-                        </h1>
+                        <h1 className="text-gray-900 text-xl font-bold">FlashCard</h1>
                         <p className="text-gray-500 text-md">Вчи ефективно</p>
                     </div>
                 </div>
@@ -88,24 +77,12 @@ const Navbar = () => {
                                 >
                                     <div
                                         className={`w-5 h-5 transition-transform duration-200 ${
-                                            active
-                                                ? ""
-                                                : "group-hover:scale-110"
+                                            active ? "" : "group-hover:scale-110"
                                         }`}
                                     >
                                         <Icon className="w-5 h-5" />
                                     </div>
-                                    <span className="font-medium">
-                                        {item.label}
-                                    </span>
-
-                                    {/* Значок нових досягнень для профілю */}
-                                    {item.path === "/profile" &&
-                                        hasUnseenAchievements && (
-                                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                                            </div>
-                                        )}
+                                    <span className="font-medium">{item.label}</span>
                                 </Link>
                             </li>
                         );
