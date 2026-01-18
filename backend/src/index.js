@@ -7,35 +7,21 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 
-// Rate limiting middleware
-import {
-    generalLimiter,
-    openaiLimiter,
-    ttsLimiter,
-    authLimiter,
-    slowDownMiddleware,
-    rateLimitLogger,
-    dynamicLimiter,
-    internalServiceBypass,
-    conditionalLimiter,
-} from "./middleware/rateLimiting.middleware.js";
-
 import authRoutes from "./routes/auth.route.js";
 import flashcardRoutes from "./routes/flashcard.route.js";
 import categoryRoutes from "./routes/category.route.js";
 import ttsRoutes from "./routes/tts.route.js";
 import userSettingsRoutes from "./routes/userSettings.route.js";
 import openaiRoutes from "./routes/openai.route.js";
+
 import database from "./lib/db.js";
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
-// Enhanced logging function
 const logger = {
     log: (message, data = null) => {
         if (NODE_ENV === "development") {
@@ -62,20 +48,6 @@ const logger = {
     },
 };
 
-// Enhanced logging for environment
-logger.info("Starting application with environment check:");
-logger.log("- NODE_ENV:", NODE_ENV);
-logger.log("- PORT:", PORT);
-logger.log("- MONGODB_URI:", process.env.MONGODB_URI ? "Set" : "Not set");
-logger.log(
-    "- OPENAI_API_KEY:",
-    process.env.OPENAI_API_KEY
-        ? `System key set (starts with: ${process.env.OPENAI_API_KEY.substring(0, 10)}...)`
-        : "Not set"
-);
-logger.log("- JWT_SECRET:", process.env.JWT_SECRET ? "Set" : "Not set");
-
-// Security middleware (should be first)
 app.use(
     helmet({
         contentSecurityPolicy: {
@@ -91,7 +63,6 @@ app.use(
     })
 );
 
-// Compression middleware
 app.use(
     compression({
         filter: (req, res) => {
@@ -104,17 +75,6 @@ app.use(
     })
 );
 
-// Internal service bypass (перед rate limiting)
-app.use(internalServiceBypass);
-
-// Rate limiting logger
-app.use(rateLimitLogger);
-
-// General rate limiting з slow down
-app.use(conditionalLimiter(slowDownMiddleware));
-app.use(conditionalLimiter(generalLimiter));
-
-// Basic middleware
 app.use(
     express.json({
         limit: "10mb",
@@ -137,7 +97,6 @@ app.use(
 
 app.use(cookieParser());
 
-// Enhanced CORS configuration
 const corsOptions = {
     origin: (origin, callback) => {
         const allowedOrigins = [
@@ -152,14 +111,6 @@ const corsOptions = {
 
         if (allowedOrigins.includes(origin)) {
             return callback(null, true);
-        }
-
-        // В production додати реальні домени
-        if (NODE_ENV === "production") {
-            // const productionOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
-            // if (productionOrigins.includes(origin)) {
-            //     return callback(null, true);
-            // }
         }
 
         logger.warn("CORS: Blocked request from origin", {
@@ -216,12 +167,12 @@ if (NODE_ENV === "development") {
 }
 
 // Routes з specific rate limiting
-app.use("/api/auth", conditionalLimiter(authLimiter), authRoutes);
-app.use("/api/flashcards", flashcardRoutes); // ПІДТРИМУЄ ВСІ ТИПИ ВПРАВ + ОПТИМІЗАЦІЮ
+app.use("/api/auth", authRoutes);
+app.use("/api/flashcards", flashcardRoutes);
 app.use("/api/categories", categoryRoutes);
-app.use("/api/tts", conditionalLimiter(ttsLimiter), ttsRoutes);
+app.use("/api/tts", ttsRoutes);
 app.use("/api/settings", userSettingsRoutes);
-app.use("/api/openai", conditionalLimiter(openaiLimiter), openaiRoutes);
+app.use("/api/openai", openaiRoutes);
 
 // ОНОВЛЕНО: Enhanced health check endpoint з інформацією про оптимізацію
 app.get("/api/health", (req, res) => {

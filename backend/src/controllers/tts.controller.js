@@ -393,15 +393,6 @@ const generateSpeech = async (req, res) => {
                     "API key may be expired, invalid, or have insufficient permissions",
                 action: "Check your API key in Settings",
             };
-        } else if (
-            error.status === 429 ||
-            error.message?.includes("rate limit")
-        ) {
-            errorResponse = {
-                message: "OpenAI API rate limit exceeded",
-                details: "Too many requests to OpenAI API",
-                action: "Please try again later",
-            };
         } else if (error.status === 402 || error.message?.includes("quota")) {
             errorResponse = {
                 message: "OpenAI API quota exceeded",
