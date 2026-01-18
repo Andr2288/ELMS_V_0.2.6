@@ -15,15 +15,11 @@ const getUserSettings = async (req, res) => {
                 apiKeySource: "system",
                 userApiKey: null,
                 ttsSettings: {
-                    model: "tts-1",
                     voice: "alloy",
                     speed: 1.0,
-                    responseFormat: "mp3",
                     voiceStyle: "neutral",
-                    customInstructions: "",
                 },
                 generalSettings: {
-                    cacheAudio: true,
                     defaultEnglishLevel: "B1",
                     // ДОДАНО: Налаштування сортування за замовчуванням
                     categorySortBy: "date",
@@ -240,15 +236,11 @@ const resetUserSettings = async (req, res) => {
             apiKeySource: "system",
             userApiKey: null,
             ttsSettings: {
-                model: "tts-1",
                 voice: "alloy",
                 speed: 1.0,
-                responseFormat: "mp3",
                 voiceStyle: "neutral",
-                customInstructions: "",
             },
             generalSettings: {
-                cacheAudio: true,
                 defaultEnglishLevel: "B1",
                 // ДОДАНО: Налаштування сортування за замовчуванням
                 categorySortBy: "date",
@@ -280,23 +272,6 @@ const resetUserSettings = async (req, res) => {
 const getAvailableOptions = async (req, res) => {
     try {
         return res.status(200).json({
-            models: [
-                {
-                    id: "tts-1",
-                    name: "TTS-1 (Standard)",
-                    description: "Fast, good quality",
-                },
-                {
-                    id: "tts-1-hd",
-                    name: "TTS-1 HD",
-                    description: "Higher quality, slower",
-                },
-                {
-                    id: "gpt-4o-mini-tts",
-                    name: "GPT-4o Mini TTS",
-                    description: "Advanced model with custom instructions",
-                },
-            ],
             voices: [
                 {
                     id: "alloy",
@@ -345,28 +320,6 @@ const getAvailableOptions = async (req, res) => {
                     id: "educational",
                     name: "Навчальний",
                     description: "Чіткий та зрозумілий для навчання",
-                },
-            ],
-            responseFormats: [
-                {
-                    id: "mp3",
-                    name: "MP3",
-                    description: "Standard quality, widely supported",
-                },
-                {
-                    id: "opus",
-                    name: "Opus",
-                    description: "Good compression, modern format",
-                },
-                {
-                    id: "aac",
-                    name: "AAC",
-                    description: "High quality, Apple preferred",
-                },
-                {
-                    id: "flac",
-                    name: "FLAC",
-                    description: "Lossless quality, large files",
                 },
             ],
             englishLevels: [
@@ -433,7 +386,6 @@ const getAvailableOptions = async (req, res) => {
                     description: "Використовувати ваш власний OpenAI API ключ",
                 },
             ],
-            // ДОДАНО: Опції сортування
             categorySortOptions: [
                 {
                     id: "date",

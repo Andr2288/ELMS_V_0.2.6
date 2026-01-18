@@ -401,46 +401,6 @@ const server = app.listen(PORT, () => {
         `Health check available at: http://localhost:${PORT}/api/health`
     );
     logger.info(`Metrics available at: http://localhost:${PORT}/api/metrics`);
-    logger.info("🚀 ОПТИМІЗОВАНА СИСТЕМА НАВЧАННЯ ЗАПУЩЕНА:");
-    logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
-    // ДОДАНО: Інформація про нові функції оптимізації
-    logger.info("⚡ МИТТЄВЕ ЗАВАНТАЖЕННЯ:");
-    logger.info("  ✓ Основні вправи: <100ms (frontend cache)");
-    logger.info("  ✓ Швидка розминка: миттєво");
-    logger.info("  ✓ Інтенсивний режим: миттєво");
-    logger.info("  ✓ Марафон знань: миттєво");
-
-    logger.info("🧠 РОЗУМНА СИСТЕМА:");
-    logger.info("  ✓ Пріоритизація: Learning > Review");
-    logger.info("  ✓ Автоматична генерація списків вправ");
-    logger.info("  ✓ Оптимізована рандомізація");
-
-    logger.info("🌐 МЕРЕЖЕВІ ВПРАВИ:");
-    logger.info("  ✓ Reading Comprehension: ~2-5s");
-
-    logger.info("📊 ПІДТРИМУВАНІ ФУНКЦІЇ:");
-    logger.info("- Security headers (Helmet)");
-    logger.info("- Response compression");
-    logger.info("- Advanced rate limiting");
-    logger.info("- Request/Error logging");
-    logger.info("- Graceful shutdown handling");
-    logger.info("- User settings management");
-    logger.info("- Personal OpenAI API keys");
-    logger.info("- Advanced TTS configuration");
-    logger.info("- AI-powered flashcard generation");
-
-    logger.info("🎯 СИСТЕМА ВПРАВ (5 типів):");
-    logger.info("  ⚡ Основні (миттєве завантаження):");
-    logger.info("    • sentence-completion");
-    logger.info("    • multiple-choice");
-    logger.info("    • listen-and-fill");
-    logger.info("    • listen-and-choose");
-    logger.info("  🌐 Додаткові (мережеве завантаження):");
-    logger.info("    • reading-comprehension");
-
-    logger.info("- Performance monitoring");
-    logger.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     database.connectDB();
 });

@@ -182,12 +182,9 @@ const generateSpeech = async (req, res) => {
                 userId,
                 apiKeySource: "system",
                 ttsSettings: {
-                    model: "tts-1",
                     voice: "alloy",
                     speed: 1.0,
-                    responseFormat: "mp3",
                     voiceStyle: "neutral",
-                    customInstructions: "",
                 },
             });
             await userSettings.save();
@@ -216,14 +213,12 @@ const generateSpeech = async (req, res) => {
             });
         }
 
-        // ОНОВЛЕНО: Enhanced cache key з proper hashing
         const cacheKeyData = {
             text: text.toLowerCase().trim(),
-            model: userSettings.ttsSettings.model,
+            model: "gpt-4o-mini-tts",
             voice: userSettings.ttsSettings.voice,
             speed: Math.round(userSettings.ttsSettings.speed * 100) / 100,
             style: userSettings.ttsSettings.voiceStyle,
-            custom: userSettings.ttsSettings.customInstructions,
             exercise: exercise || "general",
         };
 
@@ -290,30 +285,15 @@ const generateSpeech = async (req, res) => {
 
         // Prepare TTS parameters
         const ttsParams = {
-            model: userSettings.ttsSettings.model,
+            model: "gpt-4o-mini-tts",
             voice: userSettings.ttsSettings.voice,
-            input: text.substring(0, 4096), // Limit text length
-            response_format: userSettings.ttsSettings.responseFormat,
+            input: text.substring(0, 4096),
+            response_format: "mp3",
             speed: Math.max(
                 0.25,
                 Math.min(4.0, userSettings.ttsSettings.speed)
-            ), // Clamp speed
+            ),
         };
-
-        // Add custom instructions for advanced models
-        if (userSettings.ttsSettings.model === "gpt-4o-mini-tts") {
-            let instructions = UserSettings.getVoiceStyleInstructions(
-                userSettings.ttsSettings.voiceStyle
-            );
-
-            if (userSettings.ttsSettings.customInstructions) {
-                instructions +=
-                    "\n\nAdditional instructions: " +
-                    userSettings.ttsSettings.customInstructions;
-            }
-
-            ttsParams.instructions = instructions;
-        }
 
         try {
             // ОНОВЛЕНО: Generate speech з abort signal
@@ -342,8 +322,6 @@ const generateSpeech = async (req, res) => {
 
             // ОНОВЛЕНО: Memory-safe caching
             const shouldCache =
-                userSettings.generalSettings.cacheAudio &&
-                audioCache.size < audioCache.maxSize &&
                 (!exercise || exercise === "general") &&
                 buffer.length < 5 * 1024 * 1024; // Не кешуємо файли більше 5MB
 
@@ -448,82 +426,6 @@ const generateSpeech = async (req, res) => {
         }
 
         return res.status(error.status || 500).json(errorResponse);
-    }
-};
-
-// Test TTS with current user settings and API key
-const testTTSWithCurrentSettings = async (req, res) => {
-    try {
-        const userId = req.user._id;
-
-        const userSettings = await UserSettings.findOne({ userId });
-        if (!userSettings) {
-            return res.status(400).json({
-                success: false,
-                message: "User settings not found",
-                details: "Please configure your settings first",
-            });
-        }
-
-        const effectiveApiKey = userSettings.getEffectiveApiKey();
-        const apiKeyInfo = userSettings.getApiKeyInfo();
-
-        if (!effectiveApiKey) {
-            return res.status(400).json({
-                success: false,
-                message: "No API key available",
-                details: "Configure a user or system API key",
-                apiKeyInfo,
-            });
-        }
-
-        console.log("Testing TTS with current settings...");
-
-        const openai = new OpenAI({
-            apiKey: effectiveApiKey,
-            timeout: 15000, // Коротший timeout для тесту
-        });
-
-        // Use user's TTS settings
-        const ttsParams = {
-            model: userSettings.ttsSettings.model,
-            voice: userSettings.ttsSettings.voice,
-            input: "Test TTS functionality",
-            response_format: userSettings.ttsSettings.responseFormat,
-            speed: userSettings.ttsSettings.speed,
-        };
-
-        const mp3 = await openai.audio.speech.create(ttsParams);
-        const buffer = Buffer.from(await mp3.arrayBuffer());
-
-        console.log("TTS test successful. Audio size:", buffer.length);
-
-        return res.status(200).json({
-            success: true,
-            message: "TTS працює з поточними налаштуваннями!",
-            details: `Тест успішний. Використовується ${apiKeyInfo.effectiveSource === "user" ? "ваш особистий" : "системний"} ключ.`,
-            audio_size: buffer.length,
-            settings_used: ttsParams,
-            apiKeyInfo,
-        });
-    } catch (error) {
-        console.log("TTS test failed:", error.message);
-
-        let errorDetails = {
-            success: false,
-            message: "TTS test failed",
-            error: error.message,
-        };
-
-        if (error.status === 401) {
-            errorDetails.message = "Invalid API key for TTS";
-        } else if (error.status === 402) {
-            errorDetails.message = "Insufficient credits for TTS";
-        } else if (error.status === 429) {
-            errorDetails.message = "TTS rate limit exceeded";
-        }
-
-        return res.status(error.status || 500).json(errorDetails);
     }
 };
 
@@ -669,8 +571,8 @@ const checkAvailableModels = async (req, res) => {
                 id &&
                 (id.includes("tts") ||
                     id.includes("speech") ||
-                    id === "tts-1" ||
-                    id === "tts-1-hd")
+                    id === "gpt-4o-mini-tts" ||
+                    id === "gpt-4o-mini-tts")
             );
         });
 
@@ -732,9 +634,8 @@ const cancelUserRequests = async (req, res) => {
 
 export default {
     generateSpeech,
-    testTTSWithCurrentSettings,
     clearAudioCache,
     getCacheStats,
     checkAvailableModels,
-    cancelUserRequests, // ДОДАНО
+    cancelUserRequests,
 };

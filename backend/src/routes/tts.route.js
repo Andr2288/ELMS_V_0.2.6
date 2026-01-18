@@ -14,13 +14,6 @@ router.post(
     ttsController.generateSpeech
 );
 
-// Test TTS with current settings and API key
-router.get(
-    "/test-current",
-    authMiddleware.protectRoute,
-    ttsController.testTTSWithCurrentSettings
-);
-
 // Check available models with current API key
 router.get(
     "/models",

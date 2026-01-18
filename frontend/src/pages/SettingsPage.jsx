@@ -35,9 +35,7 @@ const SettingsPage = () => {
 
     const handleResetSettings = async () => {
         if (
-            !confirm(
-                "Ви впевнені, що хочете скинути всі налаштування до значень за замовчуванням?"
-            )
+            !confirm("Ви впевнені, що хочете скинути всі налаштування до значень за замовчуванням?")
         ) {
             return;
         }
@@ -55,9 +53,7 @@ const SettingsPage = () => {
             <div className="ml-64 min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">
-                        Завантаження налаштувань...
-                    </p>
+                    <p className="mt-4 text-gray-600">Завантаження налаштувань...</p>
                 </div>
             </div>
         );
@@ -68,9 +64,7 @@ const SettingsPage = () => {
             <div className="ml-64 min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
                 <div className="text-center">
                     <Settings className="w-12 h-12 text-red-600 mx-auto mb-4" />
-                    <p className="text-gray-600">
-                        Помилка завантаження налаштувань
-                    </p>
+                    <p className="text-gray-600">Помилка завантаження налаштувань</p>
                 </div>
             </div>
         );
@@ -87,12 +81,8 @@ const SettingsPage = () => {
                                 <Settings className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold text-gray-900">
-                                    Налаштування
-                                </h1>
-                                <p className="text-gray-600">
-                                    Персональні налаштування додатку
-                                </p>
+                                <h1 className="text-xl font-bold text-gray-900">Налаштування</h1>
+                                <p className="text-gray-600">Персональні налаштування додатку</p>
                             </div>
                         </div>
 
@@ -137,8 +127,7 @@ const SettingsPage = () => {
                                     </h2>
                                 </div>
                                 <p className="text-gray-600 mt-1">
-                                    Параметри для генерації контенту за
-                                    допомогою ШІ
+                                    Параметри для генерації контенту за допомогою ШІ
                                 </p>
                             </div>
 
@@ -149,10 +138,7 @@ const SettingsPage = () => {
                                         Модель ChatGPT
                                     </label>
                                     <select
-                                        value={
-                                            settings.aiSettings?.chatgptModel ||
-                                            "gpt-4.1-mini"
-                                        }
+                                        value={settings.aiSettings?.chatgptModel || "gpt-4.1-mini"}
                                         onChange={(e) =>
                                             handleSettingChange(
                                                 "aiSettings.chatgptModel",
@@ -161,25 +147,16 @@ const SettingsPage = () => {
                                         }
                                         className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     >
-                                        {availableOptions.chatgptModels?.map(
-                                            (model) => (
-                                                <option
-                                                    key={model.id}
-                                                    value={model.id}
-                                                >
-                                                    {model.name}
-                                                </option>
-                                            )
-                                        )}
+                                        {availableOptions.chatgptModels?.map((model) => (
+                                            <option key={model.id} value={model.id}>
+                                                {model.name}
+                                            </option>
+                                        ))}
                                     </select>
                                     <p className="text-xs text-gray-500 mt-1">
                                         {availableOptions.chatgptModels?.find(
-                                            (m) =>
-                                                m.id ===
-                                                settings.aiSettings
-                                                    ?.chatgptModel
-                                        )?.description ||
-                                            "Модель для генерації контенту"}
+                                            (m) => m.id === settings.aiSettings?.chatgptModel
+                                        )?.description || "Модель для генерації контенту"}
                                     </p>
                                 </div>
 
@@ -190,8 +167,7 @@ const SettingsPage = () => {
                                     </label>
                                     <select
                                         value={
-                                            settings.generalSettings
-                                                ?.defaultEnglishLevel || "B1"
+                                            settings.generalSettings?.defaultEnglishLevel || "B1"
                                         }
                                         onChange={(e) =>
                                             handleSettingChange(
@@ -201,23 +177,17 @@ const SettingsPage = () => {
                                         }
                                         className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     >
-                                        {availableOptions.englishLevels?.map(
-                                            (level) => (
-                                                <option
-                                                    key={level.id}
-                                                    value={level.id}
-                                                >
-                                                    {level.name}
-                                                </option>
-                                            )
-                                        )}
+                                        {availableOptions.englishLevels?.map((level) => (
+                                            <option key={level.id} value={level.id}>
+                                                {level.name}
+                                            </option>
+                                        ))}
                                     </select>
                                     <p className="text-xs text-gray-500 mt-1">
                                         {availableOptions.englishLevels?.find(
                                             (l) =>
                                                 l.id ===
-                                                settings.generalSettings
-                                                    ?.defaultEnglishLevel
+                                                settings.generalSettings?.defaultEnglishLevel
                                         )?.description ||
                                             "Рівень складності англійської для генерації контенту"}
                                     </p>
@@ -236,87 +206,32 @@ const SettingsPage = () => {
                                         Налаштування TTS
                                     </h2>
                                 </div>
-                                <p className="text-gray-600 mt-1">
-                                    Параметри синтезу мовлення
-                                </p>
+                                <p className="text-gray-600 mt-1">Параметри синтезу мовлення</p>
                             </div>
 
                             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Model */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Модель TTS
-                                    </label>
-                                    <select
-                                        value={
-                                            settings.ttsSettings?.model ||
-                                            "tts-1"
-                                        }
-                                        onChange={(e) =>
-                                            handleSettingChange(
-                                                "ttsSettings.model",
-                                                e.target.value
-                                            )
-                                        }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    >
-                                        {availableOptions.models?.map(
-                                            (model) => (
-                                                <option
-                                                    key={model.id}
-                                                    value={model.id}
-                                                >
-                                                    {model.name}
-                                                </option>
-                                            )
-                                        )}
-                                    </select>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        {
-                                            availableOptions.models?.find(
-                                                (m) =>
-                                                    m.id ===
-                                                    settings.ttsSettings?.model
-                                            )?.description
-                                        }
-                                    </p>
-                                </div>
-
                                 {/* Voice */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Голос
                                     </label>
                                     <select
-                                        value={
-                                            settings.ttsSettings?.voice ||
-                                            "alloy"
-                                        }
+                                        value={settings.ttsSettings?.voice || "alloy"}
                                         onChange={(e) =>
-                                            handleSettingChange(
-                                                "ttsSettings.voice",
-                                                e.target.value
-                                            )
+                                            handleSettingChange("ttsSettings.voice", e.target.value)
                                         }
                                         className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     >
-                                        {availableOptions.voices?.map(
-                                            (voice) => (
-                                                <option
-                                                    key={voice.id}
-                                                    value={voice.id}
-                                                >
-                                                    {voice.name}
-                                                </option>
-                                            )
-                                        )}
+                                        {availableOptions.voices?.map((voice) => (
+                                            <option key={voice.id} value={voice.id}>
+                                                {voice.name}
+                                            </option>
+                                        ))}
                                     </select>
                                     <p className="text-xs text-gray-500 mt-1">
                                         {
                                             availableOptions.voices?.find(
-                                                (v) =>
-                                                    v.id ===
-                                                    settings.ttsSettings?.voice
+                                                (v) => v.id === settings.ttsSettings?.voice
                                             )?.description
                                         }
                                     </p>
@@ -325,17 +240,14 @@ const SettingsPage = () => {
                                 {/* Speed */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Швидкість:{" "}
-                                        {settings.ttsSettings?.speed || 1.0}x
+                                        Швидкість: {settings.ttsSettings?.speed || 1.0}x
                                     </label>
                                     <input
                                         type="range"
                                         min="0.5"
                                         max="2.0"
                                         step="0.10"
-                                        value={
-                                            settings.ttsSettings?.speed || 1.0
-                                        }
+                                        value={settings.ttsSettings?.speed || 1.0}
                                         onChange={(e) =>
                                             handleSettingChange(
                                                 "ttsSettings.speed",
@@ -351,57 +263,13 @@ const SettingsPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Response Format */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Формат аудіо
-                                    </label>
-                                    <select
-                                        value={
-                                            settings.ttsSettings
-                                                ?.responseFormat || "mp3"
-                                        }
-                                        onChange={(e) =>
-                                            handleSettingChange(
-                                                "ttsSettings.responseFormat",
-                                                e.target.value
-                                            )
-                                        }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    >
-                                        {availableOptions.responseFormats?.map(
-                                            (format) => (
-                                                <option
-                                                    key={format.id}
-                                                    value={format.id}
-                                                >
-                                                    {format.name}
-                                                </option>
-                                            )
-                                        )}
-                                    </select>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        {
-                                            availableOptions.responseFormats?.find(
-                                                (f) =>
-                                                    f.id ===
-                                                    settings.ttsSettings
-                                                        ?.responseFormat
-                                            )?.description
-                                        }
-                                    </p>
-                                </div>
-
                                 {/* Voice Style */}
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Стиль голосу
                                     </label>
                                     <select
-                                        value={
-                                            settings.ttsSettings?.voiceStyle ||
-                                            "neutral"
-                                        }
+                                        value={settings.ttsSettings?.voiceStyle || "neutral"}
                                         onChange={(e) =>
                                             handleSettingChange(
                                                 "ttsSettings.voiceStyle",
@@ -410,65 +278,20 @@ const SettingsPage = () => {
                                         }
                                         className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     >
-                                        {availableOptions.voiceStyles?.map(
-                                            (style) => (
-                                                <option
-                                                    key={style.id}
-                                                    value={style.id}
-                                                >
-                                                    {style.name}
-                                                </option>
-                                            )
-                                        )}
+                                        {availableOptions.voiceStyles?.map((style) => (
+                                            <option key={style.id} value={style.id}>
+                                                {style.name}
+                                            </option>
+                                        ))}
                                     </select>
                                     <p className="text-xs text-gray-500 mt-1">
                                         {
                                             availableOptions.voiceStyles?.find(
-                                                (s) =>
-                                                    s.id ===
-                                                    settings.ttsSettings
-                                                        ?.voiceStyle
+                                                (s) => s.id === settings.ttsSettings?.voiceStyle
                                             )?.description
                                         }
                                     </p>
                                 </div>
-
-                                {/* Custom Instructions */}
-                                {settings.ttsSettings?.model ===
-                                    "gpt-4o-mini-tts" && (
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Додаткові інструкції (тільки для
-                                            GPT-4o Mini TTS)
-                                        </label>
-                                        <textarea
-                                            value={
-                                                settings.ttsSettings
-                                                    ?.customInstructions || ""
-                                            }
-                                            onChange={(e) =>
-                                                handleSettingChange(
-                                                    "ttsSettings.customInstructions",
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="Додаткові інструкції для стилю озвучування..."
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                                            rows="3"
-                                            maxLength="500"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            {
-                                                (
-                                                    settings.ttsSettings
-                                                        ?.customInstructions ||
-                                                    ""
-                                                ).length
-                                            }
-                                            /500 символів
-                                        </p>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     )}
@@ -479,40 +302,7 @@ const SettingsPage = () => {
                             <h2 className="text-xl font-semibold text-gray-900">
                                 Загальні налаштування
                             </h2>
-                            <p className="text-gray-600 mt-1">
-                                Основні параметри застосунку
-                            </p>
-                        </div>
-
-                        <div className="p-6">
-                            {/* Cache Audio */}
-                            <div className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    id="cacheAudio"
-                                    checked={
-                                        settings.generalSettings?.cacheAudio ||
-                                        false
-                                    }
-                                    onChange={(e) =>
-                                        handleSettingChange(
-                                            "generalSettings.cacheAudio",
-                                            e.target.checked
-                                        )
-                                    }
-                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                                />
-                                <label
-                                    htmlFor="cacheAudio"
-                                    className="ml-2 text-sm text-gray-700"
-                                >
-                                    Кешувати аудіо файли
-                                </label>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1 ml-6">
-                                Збереження аудіо файлів для швидшого повторного
-                                відтворення
-                            </p>
+                            <p className="text-gray-600 mt-1">Основні параметри застосунку</p>
                         </div>
                     </div>
                 </div>

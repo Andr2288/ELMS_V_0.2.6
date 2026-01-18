@@ -38,8 +38,7 @@ export const useUserSettingsStore = create((set, get) => {
             if (error.name !== "AbortError" && error.name !== "CanceledError") {
                 console.error("Settings: Debounced save failed:", error);
                 set({ isSaving: false });
-                const message =
-                    error.response?.data?.message || "Помилка збереження";
+                const message = error.response?.data?.message || "Помилка збереження";
                 toast.error(message);
             }
         }
@@ -67,10 +66,7 @@ export const useUserSettingsStore = create((set, get) => {
 
                 return response.data;
             } catch (error) {
-                if (
-                    error.name !== "AbortError" &&
-                    error.name !== "CanceledError"
-                ) {
+                if (error.name !== "AbortError" && error.name !== "CanceledError") {
                     console.error("Error loading settings:", error);
                     set({ isLoading: false });
                 }
@@ -92,10 +88,7 @@ export const useUserSettingsStore = create((set, get) => {
                 set({ availableOptions: response.data });
                 return response.data;
             } catch (error) {
-                if (
-                    error.name !== "AbortError" &&
-                    error.name !== "CanceledError"
-                ) {
+                if (error.name !== "AbortError" && error.name !== "CanceledError") {
                     console.error("Error loading options:", error);
                 }
                 return null;
@@ -172,10 +165,7 @@ export const useUserSettingsStore = create((set, get) => {
 
                 return response.data;
             } catch (error) {
-                if (
-                    error.name !== "AbortError" &&
-                    error.name !== "CanceledError"
-                ) {
+                if (error.name !== "AbortError" && error.name !== "CanceledError") {
                     console.error("Error resetting settings:", error);
                     set({ isSaving: false });
                     toast.error("Помилка скидання налаштувань");
@@ -189,12 +179,9 @@ export const useUserSettingsStore = create((set, get) => {
             const settings = get().settings;
             return (
                 settings?.ttsSettings || {
-                    model: "tts-1",
                     voice: "alloy",
                     speed: 1.0,
-                    responseFormat: "mp3",
                     voiceStyle: "neutral",
-                    customInstructions: "",
                 }
             );
         },
@@ -204,7 +191,6 @@ export const useUserSettingsStore = create((set, get) => {
             const settings = get().settings;
             return (
                 settings?.generalSettings || {
-                    cacheAudio: true,
                     defaultEnglishLevel: "B1",
                     // ДОДАНО: Налаштування сортування за замовчуванням
                     categorySortBy: "date",
@@ -292,15 +278,12 @@ export const useUserSettingsStore = create((set, get) => {
 
             return {
                 hasCustomTTSSettings:
-                    settings.ttsSettings?.model !== "tts-1" ||
-                    settings.ttsSettings?.voice !== "alloy" ||
-                    settings.ttsSettings?.speed !== 1.0,
+                    settings.ttsSettings?.voice !== "alloy" || settings.ttsSettings?.speed !== 1.0,
                 hasCustomSortingSettings:
                     settings.generalSettings?.categorySortBy !== "date" ||
                     settings.generalSettings?.categorySortOrder !== "desc",
                 hasUserApiKey: settings.apiKeyInfo?.hasUserKey || false,
-                englishLevel:
-                    settings.generalSettings?.defaultEnglishLevel || "B1",
+                englishLevel: settings.generalSettings?.defaultEnglishLevel || "B1",
             };
         },
 

@@ -23,11 +23,6 @@ const userSettingsSchema = new mongoose.Schema(
 
         // TTS Settings
         ttsSettings: {
-            model: {
-                type: String,
-                default: "tts-1",
-                enum: ["tts-1", "tts-1-hd", "gpt-4o-mini-tts"],
-            },
             voice: {
                 type: String,
                 default: "alloy",
@@ -49,29 +44,15 @@ const userSettingsSchema = new mongoose.Schema(
                 min: 0.25,
                 max: 4.0,
             },
-            responseFormat: {
-                type: String,
-                default: "mp3",
-                enum: ["mp3", "opus", "aac", "flac"],
-            },
             voiceStyle: {
                 type: String,
                 default: "neutral",
                 enum: ["neutral", "formal", "calm", "dramatic", "educational"],
             },
-            customInstructions: {
-                type: String,
-                default: "",
-                maxlength: 500,
-            },
         },
 
         // General Settings
         generalSettings: {
-            cacheAudio: {
-                type: Boolean,
-                default: true,
-            },
             defaultEnglishLevel: {
                 type: String,
                 default: "B1",
