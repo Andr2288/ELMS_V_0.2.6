@@ -33,18 +33,4 @@ router.get(
     userSettingsController.getAvailableOptions
 );
 
-// Test API key
-router.post(
-    "/test-api-key",
-    authMiddleware.protectRoute,
-    userSettingsController.testApiKey
-);
-
-// Clear user API key
-router.delete(
-    "/api-key",
-    authMiddleware.protectRoute,
-    userSettingsController.clearUserApiKey
-);
-
 export default router;

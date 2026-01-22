@@ -12,25 +12,4 @@ router.post(
     ttsController.generateSpeech
 );
 
-// Check available models with current API key
-router.get(
-    "/models",
-    authMiddleware.protectRoute,
-    ttsController.checkAvailableModels
-);
-
-// Clear audio cache
-router.post(
-    "/clear-cache",
-    authMiddleware.protectRoute,
-    ttsController.clearAudioCache
-);
-
-// ДОДАНО: Get cache statistics
-router.get(
-    "/cache-stats",
-    authMiddleware.protectRoute,
-    ttsController.getCacheStats
-);
-
 export default router;
