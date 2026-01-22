@@ -1,5 +1,3 @@
-// backend/src/controllers/category.controller.js
-
 import Category from "../models/category.model.js";
 import Flashcard from "../models/flashcard.model.js";
 
@@ -12,7 +10,6 @@ const createCategory = async (req, res) => {
             return res.status(400).json({ message: "Name is required" });
         }
 
-        // Check if category with this name already exists for this user
         const existingCategory = await Category.findOne({
             userId,
             name: name.trim(),
@@ -44,7 +41,6 @@ const getCategories = async (req, res) => {
     try {
         const userId = req.user._id;
 
-        // Get categories with flashcard count
         const categories = await Category.aggregate([
             { $match: { userId: userId } },
             {
@@ -62,7 +58,7 @@ const getCategories = async (req, res) => {
             },
             {
                 $project: {
-                    flashcards: 0, // Don't return the actual flashcards
+                    flashcards: 0,
                 },
             },
             { $sort: { createdAt: -1 } },
@@ -91,7 +87,6 @@ const updateCategory = async (req, res) => {
             return res.status(404).json({ message: "Category not found" });
         }
 
-        // Check if category with this name already exists (excluding current category)
         const existingCategory = await Category.findOne({
             userId,
             name: name.trim(),
@@ -128,13 +123,11 @@ const deleteCategory = async (req, res) => {
             return res.status(404).json({ message: "Category not found" });
         }
 
-        // Count flashcards in this category
         const flashcardsCount = await Flashcard.countDocuments({
             categoryId: id,
             userId,
         });
 
-        // Delete all flashcards in this category first
         if (flashcardsCount > 0) {
             await Flashcard.deleteMany({
                 categoryId: id,
@@ -142,7 +135,6 @@ const deleteCategory = async (req, res) => {
             });
         }
 
-        // Then delete the category
         await Category.findOneAndDelete({ _id: id, userId });
 
         return res.status(200).json({
@@ -184,7 +176,6 @@ const getCategoryWithFlashcards = async (req, res) => {
     }
 };
 
-// Move flashcards from one category to another
 const moveFlashcards = async (req, res) => {
     try {
         const { flashcardIds, targetCategoryId } = req.body;
@@ -196,7 +187,6 @@ const moveFlashcards = async (req, res) => {
                 .json({ message: "Flashcard IDs are required" });
         }
 
-        // Verify target category exists (or null for uncategorized)
         if (targetCategoryId) {
             const targetCategory = await Category.findOne({
                 _id: targetCategoryId,
@@ -209,7 +199,6 @@ const moveFlashcards = async (req, res) => {
             }
         }
 
-        // Update flashcards
         const result = await Flashcard.updateMany(
             {
                 _id: { $in: flashcardIds },

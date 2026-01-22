@@ -1,5 +1,3 @@
-// backend/src/routes/openai.route.js
-
 import express from "express";
 
 import openaiController from "../controllers/openai.controller.js";

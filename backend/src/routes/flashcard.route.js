@@ -1,5 +1,3 @@
-// backend/src/routes/flashcard.route.js - ОНОВЛЕНО З НОВИМ ENDPOINT ДЛЯ МІГРАЦІЇ
-
 import express from "express";
 
 import flashcardController from "../controllers/flashcard.controller.js";
@@ -32,8 +30,6 @@ router.get(
     flashcardController.getFlashcardsGrouped
 );
 
-// РОУТИ ДЛЯ ЛОГІКИ ВИВЧЕННЯ
-
 // Обробка результату вправи (підтримує всі типи: основні та додаткові)
 router.post(
     "/exercise-result",
@@ -42,7 +38,6 @@ router.post(
 );
 
 // Отримання слів для конкретної вправи (підтримує всі типи: основні та додаткові)
-// ОНОВЛЕНО: Підтримувані типи: sentence-completion, multiple-choice, listen-and-fill, listen-and-choose, reading-comprehension
 router.get(
     "/exercise/:exerciseType",
     authMiddleware.protectRoute,

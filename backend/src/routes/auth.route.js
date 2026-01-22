@@ -1,5 +1,3 @@
-// src/routes/auth.route.js
-
 import express from "express";
 
 import authController from "../controllers/auth.controller.js";

@@ -1,5 +1,3 @@
-// backend/src/controllers/userSettings.controller.js - ДОДАНО ПІДТРИМКУ СОРТУВАННЯ
-
 import UserSettings from "../models/userSettings.model.js";
 
 const getUserSettings = async (req, res) => {
@@ -8,7 +6,6 @@ const getUserSettings = async (req, res) => {
 
         let settings = await UserSettings.findOne({ userId });
 
-        // Create default settings if none exist
         if (!settings) {
             settings = new UserSettings({
                 userId,
@@ -21,7 +18,6 @@ const getUserSettings = async (req, res) => {
                 },
                 generalSettings: {
                     defaultEnglishLevel: "B1",
-                    // ДОДАНО: Налаштування сортування за замовчуванням
                     categorySortBy: "date",
                     categorySortOrder: "desc",
                     flashcardSortBy: "date",
@@ -33,7 +29,6 @@ const getUserSettings = async (req, res) => {
             });
             await settings.save();
         } else {
-            // ДОДАНО: Міграція існуючих налаштувань для додавання полів сортування
             let needsUpdate = false;
 
             if (!settings.generalSettings) {
@@ -67,14 +62,11 @@ const getUserSettings = async (req, res) => {
             }
         }
 
-        // Додаємо інформацію про API ключі (без розкриття самих ключів)
         const settingsObj = settings.toObject();
         const apiKeyInfo = settings.getApiKeyInfo();
 
-        // Видаляємо сам ключ з відповіді для безпеки
         delete settingsObj.userApiKey;
 
-        // Додаємо інформацію про API ключі
         settingsObj.apiKeyInfo = apiKeyInfo;
 
         return res.status(200).json(settingsObj);
@@ -84,7 +76,6 @@ const getUserSettings = async (req, res) => {
     }
 };
 
-// Auto-save settings - no manual save needed
 const updateUserSettings = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -96,49 +87,25 @@ const updateUserSettings = async (req, res) => {
             settings = new UserSettings({ userId });
         }
 
-        // Update API key settings
         if (updateData.apiKeySource !== undefined) {
             settings.apiKeySource = updateData.apiKeySource;
         }
 
-        // Оновлення користувацького API ключа (окремо для безпеки)
-        if (updateData.userApiKey !== undefined) {
-            if (updateData.userApiKey && updateData.userApiKey.trim()) {
-                settings.setUserApiKey(updateData.userApiKey);
-            } else {
-                settings.clearUserApiKey();
-            }
-        }
-
-        // Update TTS settings
         if (updateData.ttsSettings) {
-            if (updateData.ttsSettings.model)
-                settings.ttsSettings.model = updateData.ttsSettings.model;
             if (updateData.ttsSettings.voice)
                 settings.ttsSettings.voice = updateData.ttsSettings.voice;
             if (updateData.ttsSettings.speed !== undefined)
                 settings.ttsSettings.speed = updateData.ttsSettings.speed;
-            if (updateData.ttsSettings.responseFormat)
-                settings.ttsSettings.responseFormat =
-                    updateData.ttsSettings.responseFormat;
             if (updateData.ttsSettings.voiceStyle)
                 settings.ttsSettings.voiceStyle =
                     updateData.ttsSettings.voiceStyle;
-            if (updateData.ttsSettings.customInstructions !== undefined)
-                settings.ttsSettings.customInstructions =
-                    updateData.ttsSettings.customInstructions;
         }
 
-        // ОНОВЛЕНО: Update general settings з підтримкою сортування
         if (updateData.generalSettings) {
-            if (updateData.generalSettings.cacheAudio !== undefined)
-                settings.generalSettings.cacheAudio =
-                    updateData.generalSettings.cacheAudio;
             if (updateData.generalSettings.defaultEnglishLevel)
                 settings.generalSettings.defaultEnglishLevel =
                     updateData.generalSettings.defaultEnglishLevel;
 
-            // ДОДАНО: Оновлення налаштувань сортування категорій
             if (updateData.generalSettings.categorySortBy !== undefined) {
                 const validCategorySortBy = [
                     "date",
@@ -168,7 +135,6 @@ const updateUserSettings = async (req, res) => {
                 }
             }
 
-            // ДОДАНО: Оновлення налаштувань сортування карток
             if (updateData.generalSettings.flashcardSortBy !== undefined) {
                 const validFlashcardSortBy = [
                     "date",
@@ -199,7 +165,6 @@ const updateUserSettings = async (req, res) => {
             }
         }
 
-        // Update AI settings
         if (updateData.aiSettings) {
             if (!settings.aiSettings) settings.aiSettings = {};
             if (updateData.aiSettings.chatgptModel)
@@ -207,10 +172,8 @@ const updateUserSettings = async (req, res) => {
                     updateData.aiSettings.chatgptModel;
         }
 
-        // Auto-save immediately
         await settings.save();
 
-        // Повертаємо оновлені налаштування без API ключа
         const settingsObj = settings.toObject();
         const apiKeyInfo = settings.getApiKeyInfo();
 
@@ -230,7 +193,6 @@ const resetUserSettings = async (req, res) => {
 
         await UserSettings.findOneAndDelete({ userId });
 
-        // ОНОВЛЕНО: Create new default settings з підтримкою сортування
         const defaultSettings = new UserSettings({
             userId,
             apiKeySource: "system",
@@ -242,7 +204,6 @@ const resetUserSettings = async (req, res) => {
             },
             generalSettings: {
                 defaultEnglishLevel: "B1",
-                // ДОДАНО: Налаштування сортування за замовчуванням
                 categorySortBy: "date",
                 categorySortOrder: "desc",
                 flashcardSortBy: "date",
@@ -254,7 +215,6 @@ const resetUserSettings = async (req, res) => {
         });
         await defaultSettings.save();
 
-        // Повертаємо налаштування без API ключа
         const settingsObj = defaultSettings.toObject();
         const apiKeyInfo = defaultSettings.getApiKeyInfo();
 
@@ -268,7 +228,6 @@ const resetUserSettings = async (req, res) => {
     }
 };
 
-// ОНОВЛЕНО: Додано нові опції для сортування
 const getAvailableOptions = async (req, res) => {
     try {
         return res.status(200).json({
@@ -373,19 +332,6 @@ const getAvailableOptions = async (req, res) => {
                     description: "Швидка та ефективна модель з хорошою якістю",
                 },
             ],
-            apiKeySources: [
-                {
-                    id: "system",
-                    name: "Системний ключ",
-                    description:
-                        "Використовувати системний API ключ (за замовчуванням)",
-                },
-                {
-                    id: "user",
-                    name: "Особистий ключ",
-                    description: "Використовувати ваш власний OpenAI API ключ",
-                },
-            ],
             categorySortOptions: [
                 {
                     id: "date",
@@ -449,75 +395,6 @@ const getAvailableOptions = async (req, res) => {
     }
 };
 
-// Тестування API ключа
-const testApiKey = async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const { apiKey } = req.body;
-
-        if (!apiKey || !apiKey.trim()) {
-            return res.status(400).json({
-                success: false,
-                message: "API ключ не вказано",
-            });
-        }
-
-        // Базова перевірка формату
-        if (!apiKey.startsWith("sk-") || apiKey.length < 20) {
-            return res.status(400).json({
-                success: false,
-                message: "Неправильний формат API ключа",
-            });
-        }
-
-        // Тут можна додати реальний тест API ключа через OpenAI
-        // Поки що просто перевіряємо формат
-
-        return res.status(200).json({
-            success: true,
-            message: "API ключ має правильний формат",
-            details: "Ключ буде перевірено при першому використанні",
-        });
-    } catch (error) {
-        console.log("Error in testApiKey controller", error.message);
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
-};
-
-// Видалення користувацького API ключа
-const clearUserApiKey = async (req, res) => {
-    try {
-        const userId = req.user._id;
-
-        let settings = await UserSettings.findOne({ userId });
-
-        if (!settings) {
-            return res
-                .status(404)
-                .json({ message: "Налаштування не знайдено" });
-        }
-
-        settings.clearUserApiKey();
-        await settings.save();
-
-        const settingsObj = settings.toObject();
-        const apiKeyInfo = settings.getApiKeyInfo();
-
-        delete settingsObj.userApiKey;
-        settingsObj.apiKeyInfo = apiKeyInfo;
-
-        return res.status(200).json({
-            success: true,
-            message: "Особистий API ключ видалено",
-            settings: settingsObj,
-        });
-    } catch (error) {
-        console.log("Error in clearUserApiKey controller", error.message);
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
-};
-
-// ДОДАНО: Отримання статистики налаштувань
 const getSettingsStats = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -563,81 +440,10 @@ const getSettingsStats = async (req, res) => {
     }
 };
 
-// ДОДАНО: Масове оновлення налаштувань сортування для всіх користувачів (міграція)
-const migrateAllUsersSettings = async (req, res) => {
-    try {
-        // Цей endpoint має бути доступний тільки адміністраторам
-        // В реальному додатку тут має бути перевірка ролей
-
-        const usersToUpdate = await UserSettings.find({
-            $or: [
-                { "generalSettings.categorySortBy": { $exists: false } },
-                { "generalSettings.categorySortOrder": { $exists: false } },
-                { "generalSettings.flashcardSortBy": { $exists: false } },
-                { "generalSettings.flashcardSortOrder": { $exists: false } },
-            ],
-        });
-
-        let updatedCount = 0;
-
-        for (const settings of usersToUpdate) {
-            let needsUpdate = false;
-
-            if (!settings.generalSettings) {
-                settings.generalSettings = {};
-                needsUpdate = true;
-            }
-
-            if (!settings.generalSettings.categorySortBy) {
-                settings.generalSettings.categorySortBy = "date";
-                needsUpdate = true;
-            }
-
-            if (!settings.generalSettings.categorySortOrder) {
-                settings.generalSettings.categorySortOrder = "desc";
-                needsUpdate = true;
-            }
-
-            if (!settings.generalSettings.flashcardSortBy) {
-                settings.generalSettings.flashcardSortBy = "date";
-                needsUpdate = true;
-            }
-
-            if (!settings.generalSettings.flashcardSortOrder) {
-                settings.generalSettings.flashcardSortOrder = "desc";
-                needsUpdate = true;
-            }
-
-            if (needsUpdate) {
-                await settings.save();
-                updatedCount++;
-            }
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: `Міграція завершена. Оновлено ${updatedCount} користувачів.`,
-            details: {
-                totalFound: usersToUpdate.length,
-                updated: updatedCount,
-            },
-        });
-    } catch (error) {
-        console.log(
-            "Error in migrateAllUsersSettings controller",
-            error.message
-        );
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
-};
-
 export default {
     getUserSettings,
     updateUserSettings,
     resetUserSettings,
     getAvailableOptions,
-    testApiKey,
-    clearUserApiKey,
-    getSettingsStats, // ДОДАНО
-    migrateAllUsersSettings, // ДОДАНО (для адміністрування)
+    getSettingsStats,
 };

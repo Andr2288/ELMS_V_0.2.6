@@ -1,5 +1,3 @@
-// src/controllers/auth.controller.js
-
 import bcrypt from "bcryptjs";
 
 import utils from "../lib/utils.js";
@@ -94,13 +92,11 @@ const logout = (req, res) => {
     }
 };
 
-// ВИПРАВЛЕНО: Правильна обробка видалення фото
 const updateProfile = async (req, res) => {
     try {
         const { fullName, profilePic } = req.body;
         const userId = req.user._id;
 
-        // Перевіряємо, чи є хоча б одне поле для оновлення
         if (!fullName && profilePic === undefined) {
             return res.status(400).json({
                 message:
@@ -108,21 +104,16 @@ const updateProfile = async (req, res) => {
             });
         }
 
-        // Підготовуємо об'єкт для оновлення
         const updateData = {};
 
-        // Оновлюємо fullName якщо воно надано
         if (fullName && fullName.trim()) {
             updateData.fullName = fullName.trim();
         }
 
-        // Оновлюємо profilePic
         if (profilePic !== undefined) {
             if (profilePic === "" || profilePic === null) {
-                // Видаляємо фото профілю
                 updateData.profilePic = "";
             } else {
-                // Завантажуємо нове фото
                 try {
                     const uploadResponse =
                         await cloudinary.uploader.upload(profilePic);
@@ -139,11 +130,10 @@ const updateProfile = async (req, res) => {
             }
         }
 
-        // Оновлюємо користувача в базі даних
         const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
             new: true,
             runValidators: true,
-        }).select("-password"); // Не повертаємо пароль
+        }).select("-password");
 
         if (!updatedUser) {
             return res.status(404).json({ message: "User not found" });
@@ -160,7 +150,6 @@ const updateProfile = async (req, res) => {
     } catch (error) {
         console.log("Error in update profile controller", error.message);
 
-        // Обробка помилок валідації Mongoose
         if (error.name === "ValidationError") {
             const messages = Object.values(error.errors).map(
                 (err) => err.message

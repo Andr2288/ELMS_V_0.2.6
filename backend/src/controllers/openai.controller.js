@@ -1,5 +1,3 @@
-// backend/src/controllers/openai.controller.js - ОНОВЛЕНА ВЕРСІЯ З ВИНЕСЕНИМИ ПРОМПТАМИ
-
 import OpenAI from "openai";
 import UserSettings from "../models/userSettings.model.js";
 import Flashcard from "../models/flashcard.model.js";
@@ -7,12 +5,10 @@ import Category from "../models/category.model.js";
 import {
     generatePrompt,
     generateRegenerateExamplesPrompt,
-    getRandomTextType,
     getRandomSentenceType,
 } from "../services/prompts.js";
 
-// Константи для таймаутів
-const OPENAI_TIMEOUT = 120000;
+const OPENAI_TIMEOUT = 15000;
 const MAX_RETRIES = 2;
 
 const generateFlashcardContent = async (req, res) => {
@@ -38,7 +34,6 @@ const generateFlashcardContent = async (req, res) => {
             });
         }
 
-        // Отримуємо інформацію про категорію якщо вказано
         let categoryContext = "";
         if (
             categoryId &&
@@ -55,9 +50,6 @@ const generateFlashcardContent = async (req, res) => {
                     if (category.description && category.description.trim()) {
                         categoryContext += ` (${category.description.trim()})`;
                     }
-                    console.log(
-                        `AI Generation: Using category context - ${category.name}`
-                    );
                 }
             } catch (categoryError) {
                 console.warn(
@@ -91,8 +83,6 @@ const generateFlashcardContent = async (req, res) => {
             await userSettings.save();
         }
 
-        console.log(`AI Generation: Using system API key for user ${userId}`);
-
         const openai = new OpenAI({
             apiKey: systemApiKey,
             timeout: OPENAI_TIMEOUT,
@@ -101,40 +91,12 @@ const generateFlashcardContent = async (req, res) => {
         const modelToUse =
             userSettings.aiSettings?.chatgptModel || "gpt-4.1-mini";
 
-        // Генеруємо промпт використовуючи функцію з prompts.js
         const prompt = generatePrompt(
             promptType,
             text,
             englishLevel,
             categoryContext
         );
-
-        console.log(
-            `Generating AI content for: "${text}" using system API key with model ${modelToUse}`
-        );
-
-        console.log("=== 🤖 OpenAI PROMPT ===");
-        console.log(`📝 Prompt Type: ${promptType}`);
-        console.log(`🔤 Text: "${text}"`);
-        console.log(`📚 English Level: ${englishLevel}`);
-        if (promptType === "readingComprehension") {
-            const selectedTextType = getRandomTextType();
-            console.log(`📄 Selected Text Type: ${selectedTextType}`);
-        }
-        if (promptType === "sentenceWithGap") {
-            const selectedSentenceType = getRandomSentenceType();
-            console.log(`🎤 Selected Sentence Type: ${selectedSentenceType}`);
-        }
-        if (categoryContext) {
-            console.log(`📁 Category Context: Used`);
-        } else {
-            console.log(`📁 Category Context: None`);
-        }
-        console.log("📋 Full Prompt:");
-        console.log("---");
-        console.log(prompt);
-        console.log("---");
-        console.log("=== END PROMPT ===\n");
 
         const executeOpenAIRequest = async (retryCount = 0) => {
             try {
@@ -190,18 +152,6 @@ const generateFlashcardContent = async (req, res) => {
 
         const chatCompletion = await executeOpenAIRequest();
         const aiResponse = chatCompletion.choices[0].message.content;
-
-        console.log("=== 🤖 OpenAI RESPONSE ===");
-        console.log(`🔤 For text: "${text}"`);
-        console.log(`📝 Type: ${promptType}`);
-        console.log(
-            `📊 Tokens used: ${chatCompletion.usage?.total_tokens || "unknown"}`
-        );
-        console.log("💬 Raw Response:");
-        console.log("---");
-        console.log(aiResponse);
-        console.log("---");
-        console.log("=== END RESPONSE ===\n");
 
         let parsedResponse = aiResponse;
         if (promptType === "completeFlashcard" || promptType === undefined) {
@@ -269,108 +219,6 @@ const generateFlashcardContent = async (req, res) => {
                     .filter((line) => line.length > 0)
                     .slice(0, 3);
             }
-        } else if (promptType === "dialog") {
-            try {
-                console.log("=== 🔍 PROCESSING DIALOG RESPONSE ===");
-                console.log("Raw response length:", aiResponse.length);
-                console.log(
-                    "Response preview:",
-                    aiResponse.substring(0, 200) + "..."
-                );
-
-                let jsonStr = aiResponse.trim();
-
-                // Метод 1: Спробувати парсити як чистий JSON
-                try {
-                    parsedResponse = JSON.parse(jsonStr);
-                    console.log("✅ Direct JSON parse successful");
-                } catch (directParseError) {
-                    console.log(
-                        "❌ Direct parse failed:",
-                        directParseError.message
-                    );
-
-                    // Метод 2: Видалити можливі markdown блоки
-                    const codeBlockMatch =
-                        jsonStr.match(/```json\s*\n?([\s\S]*?)\n?\s*```/) ||
-                        jsonStr.match(/```\s*\n?([\s\S]*?)\n?\s*```/);
-
-                    if (codeBlockMatch) {
-                        jsonStr = codeBlockMatch[1].trim();
-                        console.log(
-                            "🔄 Extracted from code block, trying again..."
-                        );
-                    }
-
-                    // Метод 3: Знайти JSON об'єкт в тексті
-                    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
-                    if (jsonMatch) {
-                        jsonStr = jsonMatch[0];
-                        console.log(
-                            "🔄 Extracted JSON object, trying again..."
-                        );
-                    }
-
-                    // Метод 4: Останній шанс - очистка та парсинг
-                    jsonStr = jsonStr
-                        .replace(/```json|```/g, "")
-                        .replace(/^\s*[\r\n]+|[\r\n]+\s*$/g, "")
-                        .trim();
-
-                    parsedResponse = JSON.parse(jsonStr);
-                    console.log("✅ Cleaned JSON parse successful");
-                }
-
-                // Валідація структури діалогу
-                const validation = validateDialogStructure(parsedResponse);
-                if (!validation.valid) {
-                    throw new Error(
-                        `Dialog validation failed: ${validation.error}`
-                    );
-                }
-
-                // Автоматичне обрізання до 3 слів якщо більше
-                if (
-                    parsedResponse.usedWords &&
-                    parsedResponse.usedWords.length > 3
-                ) {
-                    console.log(
-                        `⚠️ Dialog used ${parsedResponse.usedWords.length} words, trimming to 3:`,
-                        parsedResponse.usedWords
-                    );
-                    parsedResponse.usedWords = parsedResponse.usedWords.slice(
-                        0,
-                        3
-                    );
-                    console.log(`✂️ Trimmed to:`, parsedResponse.usedWords);
-                }
-
-                console.log("✅ Dialog validation successful:", {
-                    usedWords: parsedResponse.usedWords.length,
-                    structure: parsedResponse.dialog.start
-                        ? "start"
-                        : "replika1",
-                    startAlternatives: parsedResponse.dialog.start
-                        ? parsedResponse.dialog.start.alternatives.length
-                        : "N/A",
-                    words: parsedResponse.usedWords,
-                    dialogType: parsedResponse.dialogType || "not specified",
-                });
-            } catch (error) {
-                console.log(
-                    "❌ Complete dialog parsing failed:",
-                    error.message
-                );
-
-                return res.status(422).json({
-                    message: "Failed to generate valid dialog structure",
-                    details: error.message,
-                    error_type: "dialog_generation_failed",
-                    raw_response:
-                        aiResponse.substring(0, 500) +
-                        (aiResponse.length > 500 ? "..." : ""),
-                });
-            }
         } else if (promptType === "readingComprehension") {
             try {
                 const jsonMatch =
@@ -406,7 +254,6 @@ const generateFlashcardContent = async (req, res) => {
                         );
                     }
 
-                    // Строга перевірка що використано рівно 3 слова
                     if (
                         !Array.isArray(parsedResponse.usedWords) ||
                         parsedResponse.usedWords.length !== 3
@@ -445,17 +292,6 @@ const generateFlashcardContent = async (req, res) => {
 
                     parsedResponse.facts = shuffledFacts;
                     parsedResponse.correctOption = newCorrectIndex;
-
-                    console.log(
-                        "✅ Reading comprehension parsed successfully:"
-                    );
-                    console.log(`📄 Text type: ${parsedResponse.textType}`);
-                    console.log(
-                        `📝 Used words: ${parsedResponse.usedWords.join(", ")}`
-                    );
-                    console.log(
-                        `📊 Text length: ${parsedResponse.text.length} characters`
-                    );
                 } else {
                     throw new Error(
                         "No JSON found in reading comprehension response"
@@ -507,7 +343,6 @@ const generateFlashcardContent = async (req, res) => {
                         parsedResponse.hint = "";
                     }
 
-                    // Валідація sentenceType
                     if (!parsedResponse.sentenceType) {
                         parsedResponse.sentenceType = getRandomSentenceType();
                         console.log(
@@ -515,15 +350,6 @@ const generateFlashcardContent = async (req, res) => {
                             parsedResponse.sentenceType
                         );
                     }
-
-                    console.log(
-                        "✅ Successfully parsed sentenceWithGap JSON:",
-                        {
-                            sentenceType: parsedResponse.sentenceType,
-                            correctForm: parsedResponse.correctForm,
-                            hasHint: !!parsedResponse.hint,
-                        }
-                    );
                 } else {
                     throw new Error("No JSON found in response");
                 }
@@ -532,7 +358,6 @@ const generateFlashcardContent = async (req, res) => {
                     "Error parsing sentenceWithGap response as JSON:",
                     error
                 );
-                console.log("Raw AI response:", aiResponse);
 
                 const cleanResponse = aiResponse
                     .trim()
@@ -548,7 +373,7 @@ const generateFlashcardContent = async (req, res) => {
                 }
 
                 parsedResponse = {
-                    sentenceType: getRandomSentenceType(), // Fallback sentenceType
+                    sentenceType: getRandomSentenceType(),
                     displaySentence: displaySentence,
                     audioSentence: audioSentence,
                     correctForm: text,
@@ -563,15 +388,7 @@ const generateFlashcardContent = async (req, res) => {
             parsedResponse = aiResponse.trim().replace(/^["']|["']$/g, "");
         } else if (promptType === "translateSentenceToUkrainian") {
             parsedResponse = aiResponse.trim().replace(/^["']|["']$/g, "");
-            console.log("Sentence translation result:", parsedResponse);
         }
-
-        console.log("=== ✅ FINAL PROCESSED RESULT ===");
-        console.log(`🔤 For text: "${text}"`);
-        console.log(`📝 Type: ${promptType}`);
-        console.log("🎯 Processed Result:");
-        console.log(parsedResponse);
-        console.log("=== END FINAL RESULT ===\n");
 
         return res.status(200).json({
             result: parsedResponse,
@@ -583,7 +400,6 @@ const generateFlashcardContent = async (req, res) => {
                 promptType === "sentenceWithGap" ||
                 promptType === "matchingDescription" ||
                 promptType === "translateSentenceToUkrainian" ||
-                promptType === "dialog" ||
                 promptType === "readingComprehension",
             modelUsed: modelToUse,
             categoryContext: categoryContext
@@ -598,38 +414,10 @@ const generateFlashcardContent = async (req, res) => {
             details: "Error occurred while generating content with AI",
         };
 
-        if (error.name === "AbortError" || error.message?.includes("timeout")) {
-            errorResponse = {
-                message: "OpenAI request timed out",
-                details: "Request took too long to complete. Please try again.",
-                action: "Try with a shorter text or check your internet connection",
-            };
-        } else if (error.status === 401) {
-            errorResponse = {
-                message: "Invalid OpenAI API key",
-                details:
-                    "System API key may be expired, invalid, or have insufficient permissions",
-                action: "Contact system administrator",
-            };
-        } else if (error.status === 429) {
-            errorResponse = {
-                message: "OpenAI API rate limit exceeded",
-                details: "Too many requests to OpenAI API",
-                action: "Please try again later",
-            };
-        } else if (error.status === 402 || error.message?.includes("quota")) {
-            errorResponse = {
-                message: "OpenAI API quota exceeded",
-                details: "Insufficient credits or billing issue",
-                action: "Contact system administrator",
-            };
-        }
-
         return res.status(error.status || 500).json(errorResponse);
     }
 };
 
-// Регенерація прикладів
 const regenerateExamples = async (req, res) => {
     try {
         const { id } = req.params;
@@ -661,10 +449,6 @@ const regenerateExamples = async (req, res) => {
                         categoryContext += ` (${category.description.trim()})`;
                     }
                     categoryContext += `. Please consider this context when generating examples. The examples should be relevant to this specific topic/category.`;
-
-                    console.log(
-                        `Regenerating examples with category context - ${category.name}`
-                    );
                 }
             } catch (categoryError) {
                 console.warn(
@@ -689,30 +473,11 @@ const regenerateExamples = async (req, res) => {
             timeout: OPENAI_TIMEOUT,
         });
 
-        // Використовуємо функцію з prompts.js
         const prompt = generateRegenerateExamplesPrompt(
             flashcard.text,
             englishLevel,
             categoryContext
         );
-
-        console.log(
-            `Regenerating examples for: "${flashcard.text}" using system API key`
-        );
-
-        console.log("=== 🔄 REGENERATE EXAMPLES PROMPT ===");
-        console.log(`🔤 Text: "${flashcard.text}"`);
-        console.log(`📚 English Level: ${englishLevel}`);
-        if (categoryContext) {
-            console.log(`📁 Category Context: Used`);
-        } else {
-            console.log(`📁 Category Context: None`);
-        }
-        console.log("📋 Full Prompt:");
-        console.log("---");
-        console.log(prompt);
-        console.log("---");
-        console.log("=== END REGENERATE PROMPT ===\n");
 
         const executeRegenerateRequest = async (retryCount = 0) => {
             try {
@@ -770,17 +535,6 @@ const regenerateExamples = async (req, res) => {
         const aiResponse = chatCompletion.choices[0].message.content;
         let newExamples = [];
 
-        console.log("=== 🔄 REGENERATE RESPONSE ===");
-        console.log(`🔤 For text: "${flashcard.text}"`);
-        console.log(
-            `📊 Tokens used: ${chatCompletion.usage?.total_tokens || "unknown"}`
-        );
-        console.log("💬 Raw Response:");
-        console.log("---");
-        console.log(aiResponse);
-        console.log("---");
-        console.log("=== END REGENERATE RESPONSE ===\n");
-
         try {
             const jsonMatch =
                 aiResponse.match(/\[[\s\S]*?\]/) ||
@@ -818,14 +572,6 @@ const regenerateExamples = async (req, res) => {
                 .slice(0, 3);
         }
 
-        console.log("=== ✅ FINAL REGENERATED EXAMPLES ===");
-        console.log(`🔤 For text: "${flashcard.text}"`);
-        console.log("🎯 New Examples:");
-        newExamples.forEach((example, index) => {
-            console.log(`${index + 1}. ${example}`);
-        });
-        console.log("=== END FINAL EXAMPLES ===\n");
-
         flashcard.examples = newExamples;
         await flashcard.save();
 
@@ -848,29 +594,6 @@ const regenerateExamples = async (req, res) => {
             message: "Error regenerating examples",
             details: "Error occurred while generating new examples",
         };
-
-        if (error.name === "AbortError" || error.message?.includes("timeout")) {
-            errorResponse = {
-                message: "Request timed out",
-                details: "Request took too long to complete. Please try again.",
-            };
-        } else if (error.status === 401) {
-            errorResponse = {
-                message: "Invalid OpenAI API key",
-                details:
-                    "System API key may be expired, invalid, or have insufficient permissions",
-            };
-        } else if (error.status === 429) {
-            errorResponse = {
-                message: "OpenAI API rate limit exceeded",
-                details: "Too many requests to OpenAI API",
-            };
-        } else if (error.status === 402 || error.message?.includes("quota")) {
-            errorResponse = {
-                message: "OpenAI API quota exceeded",
-                details: "Insufficient credits or billing issue",
-            };
-        }
 
         return res.status(error.status || 500).json(errorResponse);
     }

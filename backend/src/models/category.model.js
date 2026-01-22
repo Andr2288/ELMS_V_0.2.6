@@ -1,5 +1,3 @@
-// backend/src/models/category.model.js
-
 import mongoose from "mongoose";
 
 const categorySchema = new mongoose.Schema(
@@ -18,8 +16,8 @@ const categorySchema = new mongoose.Schema(
         },
         color: {
             type: String,
-            default: "#3B82F6", // Default blue color
-            match: /^#[0-9A-F]{6}$/i, // Hex color validation
+            default: "#3B82F6",
+            match: /^#[0-9A-F]{6}$/i,
         },
         userId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -36,7 +34,6 @@ const categorySchema = new mongoose.Schema(
     }
 );
 
-// Create an index for better query performance
 categorySchema.index({ userId: 1, name: 1 });
 
 const Category = mongoose.model("Category", categorySchema);

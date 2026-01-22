@@ -1,9 +1,6 @@
-// backend/src/controllers/flashcard.controller.js - ВИПРАВЛЕНО: Оновлено для підтримки динамічного оновлення статусу
-
 import Flashcard from "../models/flashcard.model.js";
 import Category from "../models/category.model.js";
 
-// Функція для перемішування масиву (Fisher-Yates shuffle)
 const shuffleArray = (array) => {
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -13,6 +10,39 @@ const shuffleArray = (array) => {
     return shuffled;
 };
 
+/**
+ * МЕТОД 1: createFlashcard
+ *
+ * ПРИЗНАЧЕННЯ:
+ * Створює нову флешкартку (слово/фразу для вивчення) в базі даних.
+ *
+ * КОЛИ ВИКОРИСТОВУЄТЬСЯ:
+ * - Коли користувач натискає кнопку "Додати нове слово" на головній сторінці
+ * - Коли користувач зберігає AI-згенероване слово
+ *
+ * ЩО РОБИТЬ:
+ * 1. Перевіряє чи є текст слова (обов'язкове поле)
+ * 2. Якщо вказана категорія - перевіряє чи вона існує і належить користувачу
+ * 3. Обробляє масив прикладів (examples) - фільтрує пусті значення
+ * 4. Створює нову флешкартку з усіма даними:
+ *    - text (слово/фраза)
+ *    - transcription (транскрипція)
+ *    - translation (переклад)
+ *    - shortDescription (короткий опис для grid режиму)
+ *    - explanation (детальне пояснення)
+ *    - examples (масив прикладів використання)
+ *    - notes (нотатки користувача)
+ *    - categoryId (ID папки)
+ * 5. Встановлює початкові значення для системи вивчення:
+ *    - status: "learning" (статус вивчення)
+ *    - всі прапорці вправ: false (слово ще не опрацьовано)
+ * 6. Зберігає в базу даних
+ * 7. Повертає створену флешкартку з інформацією про категорію
+ *
+ * РОЛЬ В ДОДАТКУ:
+ * Це точка входу для всіх нових слів в системі. Без цього методу користувач
+ * не зможе додавати нові слова для вивчення.
+ */
 const createFlashcard = async (req, res) => {
     try {
         const {
@@ -84,6 +114,34 @@ const createFlashcard = async (req, res) => {
     }
 };
 
+/**
+ * МЕТОД 2: getFlashcards
+ *
+ * ПРИЗНАЧЕННЯ:
+ * Отримує список флешкарток користувача з можливістю фільтрації.
+ *
+ * КОЛИ ВИКОРИСТОВУЄТЬСЯ:
+ * - При завантаженні головної сторінки (HomePage)
+ * - Коли користувач вибирає конкретну категорію
+ * - Коли користувач фільтрує за статусом (learning/review)
+ * - При оновленні списку після додавання/видалення картки
+ *
+ * ЩО РОБИТЬ:
+ * 1. Отримує параметри фільтрації з URL (categoryId, status)
+ * 2. Будує MongoDB query:
+ *    - Завжди фільтрує по userId (безпека - тільки свої картки)
+ *    - Якщо categoryId="uncategorized" - шукає картки без категорії
+ *    - Якщо categoryId вказаний - шукає в цій категорії
+ *    - Якщо status вказаний - фільтрує по статусу (learning/review)
+ * 3. Виконує запит до бази даних
+ * 4. Приєднує інформацію про категорію (populate)
+ * 5. Сортує за датою створення (найновіші першими)
+ * 6. Повертає масив флешкарток
+ *
+ * РОЛЬ В ДОДАТКУ:
+ * Основний метод для відображення списку слів. Без нього користувач не побачить
+ * свої слова на екрані. Використовується ДУЖЕ часто - майже на кожній сторінці.
+ */
 const getFlashcards = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -114,6 +172,36 @@ const getFlashcards = async (req, res) => {
     }
 };
 
+/**
+ * МЕТОД 3: updateFlashcard
+ *
+ * ПРИЗНАЧЕННЯ:
+ * Оновлює існуючу флешкартку (редагування слова).
+ *
+ * КОЛИ ВИКОРИСТОВУЄТЬСЯ:
+ * - Коли користувач натискає кнопку "Редагувати" і зберігає зміни
+ * - Коли користувач регенерує приклади через AI
+ * - Коли користувач змінює категорію картки
+ *
+ * ЩО РОБИТЬ:
+ * 1. Перевіряє чи текст не пустий (обов'язкове поле)
+ * 2. Шукає флешкартку по ID і userId (безпека)
+ * 3. Якщо картка не знайдена - повертає помилку 404
+ * 4. Якщо вказана нова категорія - перевіряє чи вона існує
+ * 5. Обробляє масив прикладів (фільтрує пусті значення)
+ * 6. Оновлює всі поля флешкартки:
+ *    - text, transcription, translation
+ *    - shortDescription, explanation
+ *    - examples, notes
+ *    - isAIGenerated
+ *    - categoryId (можна переміщувати між папками)
+ * 7. Зберігає зміни в базу даних
+ * 8. Повертає оновлену флешкартку з інформацією про категорію
+ *
+ * РОЛЬ В ДОДАТКУ:
+ * Дозволяє користувачам виправляти помилки, додавати інформацію,
+ * покращувати свої картки. Важливий для підтримки якості навчального матеріалу.
+ */
 const updateFlashcard = async (req, res) => {
     try {
         const { id } = req.params;
@@ -182,6 +270,27 @@ const updateFlashcard = async (req, res) => {
     }
 };
 
+/**
+ * МЕТОД 4: deleteFlashcard
+ *
+ * ПРИЗНАЧЕННЯ:
+ * Видаляє флешкартку назавжди з бази даних.
+ *
+ * КОЛИ ВИКОРИСТОВУЄТЬСЯ:
+ * - Коли користувач натискає кнопку "Видалити" і підтверджує дію
+ * - В модальному вікні підтвердження видалення
+ *
+ * ЩО РОБИТЬ:
+ * 1. Отримує ID флешкартки з параметрів URL
+ * 2. Шукає і відразу видаляє флешкартку (findOneAndDelete)
+ * 3. Перевіряє userId - безпека (можна видаляти тільки свої картки)
+ * 4. Якщо картка не знайдена - повертає помилку 404
+ * 5. Якщо успішно - повертає повідомлення про видалення
+ *
+ * РОЛЬ В ДОДАТКУ:
+ * Дозволяє користувачам прибирати непотрібні слова, виправляти помилки,
+ * підтримувати чистоту свого словника. ВАЖЛИВО: операція незворотна!
+ */
 const deleteFlashcard = async (req, res) => {
     try {
         const { id } = req.params;
@@ -200,6 +309,36 @@ const deleteFlashcard = async (req, res) => {
     }
 };
 
+/**
+ * МЕТОД 5: getFlashcardsGrouped
+ *
+ * ПРИЗНАЧЕННЯ:
+ * Отримує флешкартки згруповані по категоріях (папках).
+ *
+ * КОЛИ ВИКОРИСТОВУЄТЬСЯ:
+ * - При відображенні списку категорій на головній сторінці
+ * - Коли потрібно показати скільки слів в кожній папці
+ * - Для статистики по категоріях
+ *
+ * ЩО РОБИТЬ:
+ * 1. Використовує MongoDB aggregation pipeline для групування:
+ *    - Фільтрує тільки картки поточного користувача ($match)
+ *    - Приєднує інформацію про категорії ($lookup)
+ *    - Групує картки по categoryId ($group)
+ *    - Рахує кількість карток в кожній групі ($count)
+ * 2. Сортує результат за categoryId
+ * 3. Повертає масив об'єктів:
+ *    {
+ *      _id: categoryId,
+ *      category: { name, color, ... },
+ *      flashcards: [...],
+ *      count: число
+ *    }
+ *
+ * РОЛЬ В ДОДАТКУ:
+ * Показує структуру всіх слів користувача по папках. Дає візуальне уявлення
+ * про організацію словника. Допомагає побачити які теми найбільш/найменш заповнені.
+ */
 const getFlashcardsGrouped = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -232,13 +371,66 @@ const getFlashcardsGrouped = async (req, res) => {
     }
 };
 
-// ВИПРАВЛЕНО: Покращена обробка результатів вправ з детальним логуванням
+/**
+ * МЕТОД 6: handleExerciseResult
+ *
+ * ПРИЗНАЧЕННЯ:
+ * Обробляє результат виконання вправи користувачем - найважливіший метод
+ * для системи прогресивного вивчення слів.
+ *
+ * КОЛИ ВИКОРИСТОВУЄТЬСЯ:
+ * - Після кожної вправи (Sentence Completion, Multiple Choice, Listen and Fill, Listen and Choose, Reading Comprehension)
+ * - Коли користувач дає правильну або неправильну відповідь
+ * - Для оновлення прогресу вивчення слів
+ *
+ * ЩО РОБИТЬ:
+ *
+ * 1. ВАЛІДАЦІЯ ДАНИХ:
+ *    - Перевіряє flashcardId або usedWordIds (для reading comprehension)
+ *    - Перевіряє exerciseType (має бути одним з 5 дозволених типів)
+ *    - Перевіряє isCorrect (true/false)
+ *
+ * 2. ВИЗНАЧЕННЯ ТИПУ ВПРАВИ:
+ *    - Для reading comprehension: обробляє масив слів (usedWordIds)
+ *    - Для звичайних вправ: обробляє одне слово (flashcardId)
+ *
+ * 3. ОБРОБКА КОЖНОГО СЛОВА:
+ *    а) Якщо відповідь ПРАВИЛЬНА:
+ *       - Викликає flashcard.handleCorrectAnswer(exerciseType)
+ *       - Встановлює прапорець для цієї вправи (напр. isSentenceCompletionExercise = true)
+ *       - Якщо всі 4 основні вправи пройдені - змінює status на "review"
+ *       - Оновлює lastReviewedAt
+ *       - Зберігає в базу даних
+ *
+ *    б) Якщо відповідь НЕПРАВИЛЬНА:
+ *       - Викликає flashcard.handleIncorrectAnswer(exerciseType)
+ *       - Скидає ВСІ прапорці вправ на false
+ *       - Повертає status на "learning"
+ *       - Користувач починає вивчення слова заново
+ *
+ * 4. СПЕЦІАЛЬНА ЛОГІКА ДЛЯ REVIEW:
+ *    - Слова зі статусом "review" НЕ обробляються у вправах
+ *    - Вони пропускаються (це слова які вже вивчені)
+ *
+ * 5. ФОРМУВАННЯ ВІДПОВІДІ:
+ *    - Для reading comprehension: повідомлення про всі оброблені слова
+ *    - Для звичайних вправ: показує прогрес у відсотках
+ *    - Повертає масив оброблених слів з оновленими статусами
+ *
+ * РОЛЬ В ДОДАТКУ:
+ * **ЦЕ СЕРЦЕ ВСІЄЇ СИСТЕМИ ВИВЧЕННЯ!**
+ * Цей метод відповідає за:
+ * - Відслідковування прогресу вивчення
+ * - Переведення слів з "learning" в "review"
+ * - Повернення слів назад при помилках
+ * - Мотивацію користувача (показує прогрес)
+ * Без цього методу вся система вивчення не працюватиме.
+ */
 const handleExerciseResult = async (req, res) => {
     try {
         const { flashcardId, exerciseType, isCorrect, usedWordIds } = req.body;
         const userId = req.user._id;
 
-        // Для reading comprehension використовуємо usedWordIds, а не flashcardId
         let wordIds;
 
         if (
@@ -248,13 +440,8 @@ const handleExerciseResult = async (req, res) => {
             usedWordIds.length > 0
         ) {
             wordIds = usedWordIds;
-            console.log(
-                `📖 Reading comprehension: processing ${wordIds.length} words:`,
-                wordIds
-            );
         } else {
             wordIds = [flashcardId];
-            console.log(`📝 Regular exercise: processing 1 word:`, flashcardId);
         }
 
         if (
@@ -284,7 +471,6 @@ const handleExerciseResult = async (req, res) => {
         let processedWords = [];
         let resultMessage = "";
 
-        // Обробляємо кожне слово
         for (const wordId of wordIds) {
             const flashcard = await Flashcard.findOne({ _id: wordId, userId });
 
@@ -293,38 +479,13 @@ const handleExerciseResult = async (req, res) => {
                 continue;
             }
 
-            // ВАЖЛИВО: Review картки НЕ обробляються у вправах
             if (flashcard.status === "review") {
-                console.log(
-                    `⏭️ Skipping review card "${flashcard.text}" - review cards don't participate in exercises`
-                );
                 continue;
             }
 
             let progressChanged = false;
 
-            // ДОДАНО: Логування початкового стану
-            console.log(
-                `📝 Processing "${flashcard.text}" for ${exerciseType}:`
-            );
-            console.log(`   Current status: ${flashcard.status}`);
-            console.log(
-                `   Sentence: ${flashcard.isSentenceCompletionExercise}`
-            );
-            console.log(`   Multiple: ${flashcard.isMultipleChoiceExercise}`);
-            console.log(`   Listen: ${flashcard.isListenAndFillExercise}`);
-            console.log(`   Choose: ${flashcard.isListenAndChooseExercise}`);
-            console.log(
-                `   Reading: ${flashcard.isReadingComprehensionExercise}`
-            );
-
-            // Спеціальна логіка для reading comprehension
             if (exerciseType === "reading-comprehension") {
-                console.log(
-                    `📖 Word "${flashcard.text}" already marked as used during selection (isRC: ${flashcard.isReadingComprehensionExercise})`
-                );
-
-                // Просто оновлюємо дату останнього повторення
                 flashcard.lastReviewedAt = new Date();
                 progressChanged = true;
 
@@ -338,7 +499,6 @@ const handleExerciseResult = async (req, res) => {
                     status: flashcard.status,
                     progressInfo: flashcard.getProgressInfo(),
                     wasUpdated: progressChanged,
-                    // ДОДАНО: Включаємо всі поля статусів для фронтенду
                     isSentenceCompletionExercise:
                         flashcard.isSentenceCompletionExercise,
                     isMultipleChoiceExercise:
@@ -351,7 +511,6 @@ const handleExerciseResult = async (req, res) => {
                     lastReviewedAt: flashcard.lastReviewedAt,
                 });
             } else if (isCorrect) {
-                // Обробляємо правильну відповідь для основних вправ
                 if (
                     [
                         "sentence-completion",
@@ -365,24 +524,6 @@ const handleExerciseResult = async (req, res) => {
 
                     if (progressChanged) {
                         await flashcard.save();
-
-                        // ДОДАНО: Логування змін після збереження
-                        console.log(
-                            `✅ After correct answer processing for "${flashcard.text}":`
-                        );
-                        console.log(`   Status: ${flashcard.status}`);
-                        console.log(
-                            `   Sentence: ${flashcard.isSentenceCompletionExercise}`
-                        );
-                        console.log(
-                            `   Multiple: ${flashcard.isMultipleChoiceExercise}`
-                        );
-                        console.log(
-                            `   Listen: ${flashcard.isListenAndFillExercise}`
-                        );
-                        console.log(
-                            `   Choose: ${flashcard.isListenAndChooseExercise}`
-                        );
                     }
 
                     processedWords.push({
@@ -391,7 +532,6 @@ const handleExerciseResult = async (req, res) => {
                         status: flashcard.status,
                         progressInfo: flashcard.getProgressInfo(),
                         wasUpdated: progressChanged,
-                        // ВАЖЛИВО: Включаємо актуальні статуси після обробки
                         isSentenceCompletionExercise:
                             flashcard.isSentenceCompletionExercise,
                         isMultipleChoiceExercise:
@@ -406,7 +546,6 @@ const handleExerciseResult = async (req, res) => {
                     });
                 }
             } else {
-                // Обробляємо неправильну відповідь для основних вправ
                 if (
                     [
                         "sentence-completion",
@@ -420,15 +559,6 @@ const handleExerciseResult = async (req, res) => {
 
                     if (progressChanged) {
                         await flashcard.save();
-
-                        // ДОДАНО: Логування змін після неправильної відповіді
-                        console.log(
-                            `❌ After incorrect answer processing for "${flashcard.text}":`
-                        );
-                        console.log(
-                            `   Status: ${flashcard.status} (should be learning)`
-                        );
-                        console.log(`   All exercise flags reset to false`);
                     }
 
                     processedWords.push({
@@ -437,7 +567,6 @@ const handleExerciseResult = async (req, res) => {
                         status: flashcard.status,
                         progressInfo: flashcard.getProgressInfo(),
                         wasUpdated: progressChanged,
-                        // ВАЖЛИВО: Включаємо актуальні статуси після скидання
                         isSentenceCompletionExercise:
                             flashcard.isSentenceCompletionExercise,
                         isMultipleChoiceExercise:
@@ -454,7 +583,6 @@ const handleExerciseResult = async (req, res) => {
             }
         }
 
-        // Формуємо відповідне повідомлення
         if (exerciseType === "reading-comprehension") {
             if (isCorrect) {
                 resultMessage = `Правильна відповідь! Прочитано успішно. Опрацьовано ${processedWords.length} слів.`;
@@ -480,21 +608,10 @@ const handleExerciseResult = async (req, res) => {
             "listen-and-choose",
         ].includes(exerciseType);
 
-        console.log(`📊 Exercise result summary:`);
-        console.log(`   Type: ${exerciseType}`);
-        console.log(`   Words processed: ${processedWords.length}`);
-        console.log(
-            `   Words: ${processedWords.map((w) => w.text).join(", ")}`
-        );
-        console.log(
-            `   Updated: ${processedWords.filter((w) => w.wasUpdated).length}`
-        );
-
-        // ВИПРАВЛЕНО: Повертаємо детальну інформацію для фронтенду
         return res.status(200).json({
             success: true,
             flashcard: processedWords.length > 0 ? processedWords[0] : null,
-            allWords: processedWords, // ВАЖЛИВО: Масив всіх оброблених слів з актуальними статусами
+            allWords: processedWords,
             message: resultMessage,
             isMainExercise: isMainExercise,
             exerciseType: exerciseType,
@@ -506,7 +623,60 @@ const handleExerciseResult = async (req, res) => {
     }
 };
 
-// ВИПРАВЛЕНО: Покращено для підтримки швидкого режиму для core вправ та повного режиму для advanced
+/**
+ * МЕТОД 7: getWordsForExercise
+ *
+ * ПРИЗНАЧЕННЯ:
+ * Вибирає слова для конкретної вправи з розумною логікою фільтрації.
+ *
+ * КОЛИ ВИКОРИСТОВУЄТЬСЯ:
+ * - Перед початком будь-якої вправи (Sentence Completion, Multiple Choice, тощо)
+ * - Коли потрібно завантажити нову порцію слів
+ * - При оновленні списку слів після виконання вправи
+ *
+ * ЩО РОБИТЬ:
+ *
+ * 1. ПАРАМЕТРИ ЗАПИТУ:
+ *    - exerciseType: тип вправи
+ *    - limit: скільки слів потрібно (за замовчуванням 10)
+ *    - categoryId: фільтр по категорії (опціонально)
+ *    - excludeIds: ID слів які треба виключити (вже використані)
+ *
+ * 2. ЗАГАЛЬНА ЛОГІКА:
+ *    - Шукає тільки слова зі статусом "learning"
+ *    - Виключає слова які вже в review (вони вивчені)
+ *    - Фільтрує по категорії якщо вказано
+ *    - Виключає ID з excludeIds
+ *
+ * 3. СПЕЦІАЛЬНА ЛОГІКА ДЛЯ READING COMPREHENSION:
+ *    - Шукає слова де isReadingComprehensionExercise = false
+ *    - Якщо таких немає - скидає прапорці у ВСІХ слів категорії
+ *    - Це дозволяє циклічно використовувати слова
+ *
+ * 4. СПЕЦІАЛЬНА ЛОГІКА ДЛЯ ОСНОВНИХ ВПРАВ:
+ *    - Sentence Completion: шукає де isSentenceCompletionExercise = false
+ *    - Multiple Choice: шукає де isMultipleChoiceExercise = false
+ *    - Listen and Fill: шукає де isListenAndFillExercise = false
+ *    - Listen and Choose: шукає де isListenAndChooseExercise = false
+ *
+ * 5. РАНДОМІЗАЦІЯ:
+ *    - Перемішує слова (shuffleArray)
+ *    - Вибирає потрібну кількість
+ *    - Повертає в випадковому порядку
+ *
+ * 6. ВІДПОВІДЬ:
+ *    - words: масив слів для вправи
+ *    - total: загальна кількість
+ *    - exerciseType: тип вправи
+ *    - breakdown: статистика (learning/review)
+ *
+ * РОЛЬ В ДОДАТКУ:
+ * Це "мозок" вибору слів для вправ. Забезпечує:
+ * - Справедливий розподіл вправ (не повторює одні й ті ж слова)
+ * - Циклічність (коли всі слова опрацьовані - починає заново)
+ * - Різноманітність (рандомізація)
+ * Без цього методу вправи не матимуть слів для відображення.
+ */
 const getWordsForExercise = async (req, res) => {
     try {
         const { exerciseType } = req.params;
@@ -518,7 +688,6 @@ const getWordsForExercise = async (req, res) => {
             "multiple-choice",
             "listen-and-fill",
             "listen-and-choose",
-            "dialog",
             "reading-comprehension",
         ];
         if (!validExerciseTypes.includes(exerciseType)) {
@@ -542,7 +711,6 @@ const getWordsForExercise = async (req, res) => {
         let wasRotationApplied = false;
         let allCategoryWords = [];
 
-        // ШВИДКИЙ РЕЖИМ: Core вправи використовують оптимізований підхід
         const coreExercises = [
             "sentence-completion",
             "multiple-choice",
@@ -551,13 +719,9 @@ const getWordsForExercise = async (req, res) => {
         ];
 
         if (coreExercises.includes(exerciseType)) {
-            console.log(
-                `⚡ Fast mode: Getting words for core exercise ${exerciseType}: userId=${userId}, categoryId=${categoryId}, limit=${limit}`
-            );
-
             const baseQuery = {
                 userId,
-                status: "learning", // Тільки learning картки для швидкого режиму
+                status: "learning",
             };
 
             if (categoryId && categoryId !== "all" && categoryId !== null) {
@@ -572,7 +736,6 @@ const getWordsForExercise = async (req, res) => {
                 baseQuery._id = { $nin: excludeIdsList };
             }
 
-            // Додаємо умову для конкретної вправи - ВАЖЛИВО для правильної фільтрації
             switch (exerciseType) {
                 case "sentence-completion":
                     baseQuery.isSentenceCompletionExercise = false;
@@ -588,39 +751,18 @@ const getWordsForExercise = async (req, res) => {
                     break;
             }
 
-            // ВИПРАВЛЕНО: Отримуємо тільки ті learning слова, які ще не пройшли цю вправу
             let learningWords = await Flashcard.find(baseQuery)
                 .populate("categoryId", "name color")
-                .sort({ lastReviewedAt: 1 }); // Сортуємо за датою останнього повторення
+                .sort({ lastReviewedAt: 1 });
 
-            console.log(
-                `⚡ Fast mode: Found ${learningWords.length} available learning words for ${exerciseType} (before filtering)`
-            );
-
-            if (learningWords.length > 0) {
-                console.log(
-                    `⚡ Available words:`,
-                    learningWords.map(
-                        (w) =>
-                            `"${w.text}" (sentence:${w.isSentenceCompletionExercise}, multiple:${w.isMultipleChoiceExercise}, listen:${w.isListenAndFillExercise}, choose:${w.isListenAndChooseExercise})`
-                    )
-                );
-            }
-
-            // Перемішуємо learning слова
             learningWords = shuffleArray(learningWords);
             words = learningWords.slice(0, parseInt(limit));
-
-            console.log(
-                `⚡ Fast mode: Selected ${words.length} learning words for ${exerciseType} (shuffled):`,
-                words.map((w) => w.text)
-            );
 
             return res.status(200).json({
                 words,
                 total: words.length,
                 exerciseType,
-                mode: "fast", // Індикатор швидкого режиму
+                mode: "fast",
                 breakdown: {
                     learning: words.length,
                     review: 0,
@@ -628,17 +770,7 @@ const getWordsForExercise = async (req, res) => {
             });
         }
 
-        // ПОВНИЙ РЕЖИМ: Advanced вправи (стара логіка)
-        console.log(
-            `🌐 Network mode: Getting words for advanced exercise ${exerciseType}`
-        );
-
-        // Логіка для reading comprehension з НЕГАЙНИМ позначенням слів
         if (exerciseType === "reading-comprehension") {
-            console.log(
-                `Getting words for reading comprehension: userId=${userId}, categoryId=${categoryId}, limit=${limit}, excludeIds=${excludeIdsList.length}`
-            );
-
             const result =
                 await Flashcard.getWordsForReadingComprehensionWithRotationInfo(
                     userId,
@@ -664,14 +796,7 @@ const getWordsForExercise = async (req, res) => {
                 });
             }
 
-            // Перемішуємо слова для reading comprehension
             words = shuffleArray(words);
-
-            console.log(
-                `Found ${words.length} words for reading comprehension (shuffled):`,
-                words.map((w) => w.text)
-            );
-            console.log(`Rotation applied: ${wasRotationApplied}`);
 
             return res.status(200).json({
                 words: words,
@@ -685,70 +810,6 @@ const getWordsForExercise = async (req, res) => {
                     : `Words selected for reading comprehension using rotation logic - already marked as used`,
             });
         }
-
-        // Логіка для діалогу - тільки learning картки
-        if (exerciseType === "dialog") {
-            console.log(
-                `Getting words for dialog: userId=${userId}, categoryId=${categoryId}, limit=${limit}`
-            );
-
-            const baseQuery = {
-                userId,
-                status: "learning",
-            };
-
-            if (categoryId && categoryId !== "all" && categoryId !== null) {
-                if (categoryId === "uncategorized") {
-                    baseQuery.categoryId = null;
-                } else {
-                    baseQuery.categoryId = categoryId;
-                }
-            }
-
-            if (excludeIdsList.length > 0) {
-                baseQuery._id = { $nin: excludeIdsList };
-            }
-
-            const learningWordsInCategory = await Flashcard.find(baseQuery)
-                .populate("categoryId", "name color")
-                .sort({ lastReviewedAt: 1 });
-
-            if (learningWordsInCategory.length === 0) {
-                console.warn(`No learning words found for dialog`);
-                return res.status(200).json({
-                    words: [],
-                    total: 0,
-                    exerciseType,
-                    mode: "network",
-                    note: "No learning words available",
-                });
-            }
-
-            // Перемішуємо всі слова перед вибором
-            const shuffledWords = shuffleArray(learningWordsInCategory);
-            const requestedCount = parseInt(limit) || 10;
-            const selectedWords = shuffledWords.slice(
-                0,
-                Math.min(requestedCount, shuffledWords.length)
-            );
-
-            console.log(
-                `Found ${selectedWords.length} learning words for dialog (shuffled):`,
-                selectedWords.map((w) => w.text)
-            );
-
-            return res.status(200).json({
-                words: selectedWords,
-                total: selectedWords.length,
-                exerciseType,
-                mode: "network",
-                note: `Learning words selected for dialog (randomized order)`,
-            });
-        }
-
-        console.log(
-            `🎲 getWordsForExercise: Retrieved words for ${exerciseType} (network mode)`
-        );
 
         return res.status(200).json({
             words: words || [],
@@ -768,6 +829,32 @@ const getWordsForExercise = async (req, res) => {
     }
 };
 
+/**
+ * МЕТОД 8: getLearningStats
+ *
+ * ПРИЗНАЧЕННЯ:
+ * Отримує статистику вивчення слів користувача.
+ *
+ * КОЛИ ВИКОРИСТОВУЄТЬСЯ:
+ * - При завантаженні головної сторінки
+ * - Після виконання вправи (для оновлення прогресу)
+ * - На сторінці статистики (якщо є)
+ * - Для відображення прогрес-барів
+ *
+ * ЩО РОБИТЬ:
+ * 1. Викликає статичний метод моделі Flashcard.getLearningStats(userId)
+ * 2. Модель рахує:
+ *    - Загальна кількість слів
+ *    - Кількість слів в "learning"
+ *    - Кількість слів в "review"
+ *    - Прогрес у відсотках для кожної вправи
+ *    - Середній прогрес по всіх словах
+ * 3. Повертає об'єкт статистики
+ *
+ * РОЛЬ В ДОДАТКУ:
+ * Показує користувачу його прогрес, мотивує продовжувати вчити слова.
+ * Візуалізує скільки слів вивчено, скільки залишилось.
+ */
 const getLearningStats = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -781,6 +868,30 @@ const getLearningStats = async (req, res) => {
     }
 };
 
+/**
+ * МЕТОД 9: getWordsWithProgress
+ *
+ * ПРИЗНАЧЕННЯ:
+ * Отримує список слів з детальною інформацією про прогрес вивчення.
+ *
+ * КОЛИ ВИКОРИСТОВУЄТЬСЯ:
+ * - На сторінці прогресу (якщо є)
+ * - Для відображення детальної статистики
+ * - При фільтрації слів по статусу
+ *
+ * ЩО РОБИТЬ:
+ * 1. Приймає опціональний параметр status (learning/review)
+ * 2. Викликає статичний метод моделі Flashcard.getWordsWithProgress(userId, status)
+ * 3. Модель повертає слова з додатковою інформацією:
+ *    - Прогрес у відсотках
+ *    - Які вправи пройдені
+ *    - Дата останнього повторення
+ * 4. Повертає масив слів з прогресом
+ *
+ * РОЛЬ В ДОДАТКУ:
+ * Дає детальний вигляд на стан вивчення кожного слова.
+ * Допомагає користувачу зрозуміти які слова потребують більше уваги.
+ */
 const getWordsWithProgress = async (req, res) => {
     try {
         const { status } = req.query;
@@ -795,6 +906,31 @@ const getWordsWithProgress = async (req, res) => {
     }
 };
 
+/**
+ * МЕТОД 10: resetWordProgress
+ *
+ * ПРИЗНАЧЕННЯ:
+ * Скидає прогрес вивчення конкретного слова (починає вивчення заново).
+ *
+ * КОЛИ ВИКОРИСТОВУЄТЬСЯ:
+ * - Коли користувач хоче почати вивчення слова заново
+ * - Якщо слово було помилково переведено в review
+ * - Для "важких" слів які потребують повторення
+ *
+ * ЩО РОБИТЬ:
+ * 1. Знаходить флешкартку по ID
+ * 2. Скидає всі параметри вивчення:
+ *    - status = "learning"
+ *    - всі прапорці вправ = false
+ *    - reviewedAt = null
+ *    - lastReviewedAt = поточна дата
+ * 3. Зберігає зміни
+ * 4. Повертає оновлену флешкартку з прогресом
+ *
+ * РОЛЬ В ДОДАТКУ:
+ * Дає користувачу контроль над процесом вивчення. Дозволяє "почати заново"
+ * якщо слово забулось або потребує повторення. Важливо для гнучкості системи.
+ */
 const resetWordProgress = async (req, res) => {
     try {
         const { id } = req.params;
@@ -824,7 +960,6 @@ const resetWordProgress = async (req, res) => {
                 text: flashcard.text,
                 status: flashcard.status,
                 progressInfo: flashcard.getProgressInfo(),
-                // ДОДАНО: Включаємо актуальні статуси після скидання
                 isSentenceCompletionExercise:
                     flashcard.isSentenceCompletionExercise,
                 isMultipleChoiceExercise: flashcard.isMultipleChoiceExercise,

@@ -1,5 +1,3 @@
-// backend/src/routes/tts.route.js - ОНОВЛЕНА ВЕРСІЯ
-
 import express from "express";
 
 import ttsController from "../controllers/tts.controller.js";

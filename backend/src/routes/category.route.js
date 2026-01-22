@@ -1,5 +1,3 @@
-// backend/src/routes/category.route.js
-
 import express from "express";
 
 import categoryController from "../controllers/category.controller.js";

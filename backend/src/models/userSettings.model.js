@@ -1,5 +1,3 @@
-// backend/src/models/userSettings.model.js - ДОДАНО СОРТУВАННЯ
-
 import mongoose from "mongoose";
 
 const userSettingsSchema = new mongoose.Schema(
@@ -143,24 +141,6 @@ userSettingsSchema.methods.getApiKeyInfo = function () {
     };
 };
 
-// ДОДАНО: Метод для встановлення користувацького API ключа
-userSettingsSchema.methods.setUserApiKey = function (apiKey) {
-    if (apiKey && apiKey.trim()) {
-        this.userApiKey = apiKey.trim();
-        this.apiKeySource = "user";
-    } else {
-        this.userApiKey = null;
-        this.apiKeySource = "system";
-    }
-};
-
-// ДОДАНО: Метод для видалення користувацького API ключа
-userSettingsSchema.methods.clearUserApiKey = function () {
-    this.userApiKey = null;
-    this.apiKeySource = "system";
-};
-
-// ДОДАНО: Метод для перевірки валідності API ключа
 userSettingsSchema.methods.isApiKeyValid = function (apiKey = null) {
     const keyToCheck = apiKey || this.getEffectiveApiKey();
 
@@ -171,7 +151,6 @@ userSettingsSchema.methods.isApiKeyValid = function (apiKey = null) {
     return keyToCheck.startsWith("sk-") && keyToCheck.length > 20;
 };
 
-// ДОДАНО: Методи для роботи з сортуванням
 userSettingsSchema.methods.getCategorySortSettings = function () {
     return {
         sortBy: this.generalSettings?.categorySortBy || "date",

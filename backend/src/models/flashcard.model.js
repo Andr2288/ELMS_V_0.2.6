@@ -1,5 +1,3 @@
-// backend/src/models/flashcard.model.js - ФІНАЛЬНА ПЕРЕВІРКА: Всі методи підтримують listen-and-choose
-
 import mongoose from "mongoose";
 
 // Функція для перемішування масиву (Fisher-Yates shuffle)
@@ -29,32 +27,23 @@ const flashcardSchema = new mongoose.Schema(
             default: "",
             trim: true,
         },
-        // Короткий опис для відображення в grid режимі
         shortDescription: {
             type: String,
             default: "",
             trim: true,
             maxlength: 200,
         },
-        // Детальне пояснення для детального режиму
         explanation: {
             type: String,
             default: "",
             trim: true,
         },
-        // Масив прикладів
         examples: [
             {
                 type: String,
                 trim: true,
             },
         ],
-        // Залишаємо старе поле для зворотної сумісності, але deprecated
-        example: {
-            type: String,
-            default: "",
-            trim: true,
-        },
         notes: {
             type: String,
             default: "",
@@ -75,14 +64,12 @@ const flashcardSchema = new mongoose.Schema(
             default: null,
         },
 
-        // Статус слова в системі вивчення
         status: {
             type: String,
             enum: ["learning", "review"],
             default: "learning",
         },
 
-        // Прогрес по кожній основній вправі
         isSentenceCompletionExercise: {
             type: Boolean,
             default: false,
@@ -95,19 +82,16 @@ const flashcardSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
-        // ✅ ПІДТВЕРДЖЕНО: Нова основна вправа додана
         isListenAndChooseExercise: {
             type: Boolean,
             default: false,
         },
 
-        // Прогрес по reading comprehension (незалежно від основних вправ)
         isReadingComprehensionExercise: {
             type: Boolean,
             default: false,
         },
 
-        // Дати для відстеження прогресу
         lastReviewedAt: {
             type: Date,
             default: Date.now,
@@ -118,7 +102,7 @@ const flashcardSchema = new mongoose.Schema(
         },
         reviewedAt: {
             type: Date,
-            default: null, // Коли стало review
+            default: null,
         },
     },
     {
@@ -145,14 +129,13 @@ flashcardSchema.post("findOne", function (doc) {
     }
 });
 
-// ✅ ПІДТВЕРДЖЕНО: Перевірка чи слово готове для review (включає всі 4 основні вправи)
 flashcardSchema.methods.isReadyForReview = function () {
     return (
         this.isSentenceCompletionExercise &&
         this.isMultipleChoiceExercise &&
         this.isListenAndFillExercise &&
         this.isListenAndChooseExercise
-    ); // ✅ ВКЛЮЧЕНО нову вправу
+    );
 };
 
 // Оновлення статусу на review якщо всі вправи пройдені
@@ -165,7 +148,7 @@ flashcardSchema.methods.updateToReviewIfReady = function () {
     return false;
 };
 
-// ✅ ПІДТВЕРДЖЕНО: Обробка правильної відповіді у вправі (включає нову вправу)
+// Обробка правильної відповіді у вправі (включає нову вправу)
 flashcardSchema.methods.handleCorrectAnswer = function (exerciseType) {
     let wasUpdated = false;
 
@@ -188,20 +171,11 @@ flashcardSchema.methods.handleCorrectAnswer = function (exerciseType) {
                 wasUpdated = true;
             }
             break;
-        case "listen-and-choose": // ✅ ПІДТВЕРДЖЕНО: нова вправа підтримується
+        case "listen-and-choose":
             if (!this.isListenAndChooseExercise) {
                 this.isListenAndChooseExercise = true;
                 wasUpdated = true;
             }
-            break;
-        case "reading-comprehension":
-            // НЕ оновлюємо тут, тому що це вже зроблено при виборі слів
-            console.log(
-                `Reading comprehension result processed - status already updated during selection`
-            );
-            break;
-        case "dialog":
-            console.log(`Dialog exercise completed - no progress change`);
             break;
     }
 
@@ -209,10 +183,7 @@ flashcardSchema.methods.handleCorrectAnswer = function (exerciseType) {
         this.lastReviewedAt = new Date();
 
         // Перевіряємо чи готове для review (тільки основні вправи)
-        if (
-            exerciseType !== "reading-comprehension" &&
-            exerciseType !== "dialog"
-        ) {
+        if (exerciseType !== "reading-comprehension") {
             if (this.updateToReviewIfReady()) {
                 wasUpdated = true;
             }
@@ -222,35 +193,34 @@ flashcardSchema.methods.handleCorrectAnswer = function (exerciseType) {
     return wasUpdated;
 };
 
-// ✅ ПІДТВЕРДЖЕНО: Обробка неправильної відповіді (включає нову вправу)
+// Обробка неправильної відповіді (включає нову вправу)
 flashcardSchema.methods.handleIncorrectAnswer = function (exerciseType) {
-    // Reading comprehension та dialog не скидають прогрес
-    if (exerciseType === "reading-comprehension" || exerciseType === "dialog") {
+    // Reading comprehension не скидає прогрес
+    if (exerciseType === "reading-comprehension") {
         return false;
     }
 
-    // ✅ ПІДТВЕРДЖЕНО: Включаємо нову вправу в перевірку прогресу
     const hadProgress =
         this.isSentenceCompletionExercise ||
         this.isMultipleChoiceExercise ||
         this.isListenAndFillExercise ||
-        this.isListenAndChooseExercise; // ✅ ВКЛЮЧЕНО нову вправу
+        this.isListenAndChooseExercise;
 
-    // ✅ ПІДТВЕРДЖЕНО: Скидаємо весь прогрес основних вправ (включаючи нову)
+    // Скидаємо весь прогрес основних вправ (включаючи нову)
     this.isSentenceCompletionExercise = false;
     this.isMultipleChoiceExercise = false;
     this.isListenAndFillExercise = false;
-    this.isListenAndChooseExercise = false; // ✅ СКИДАННЯ нової вправи
+    this.isListenAndChooseExercise = false;
 
     // Статус залишається learning
     this.status = "learning";
     this.reviewedAt = null;
     this.lastReviewedAt = new Date();
 
-    return hadProgress; // Повертаємо чи був прогрес для логування
+    return hadProgress;
 };
 
-// ✅ ПІДТВЕРДЖЕНО: Перевірка чи слово може використовуватися у вправі (включає нову вправу)
+// Перевірка чи слово може використовуватися у вправі (включає нову вправу)
 flashcardSchema.methods.canUseInExercise = function (exerciseType) {
     switch (exerciseType) {
         case "sentence-completion":
@@ -259,31 +229,28 @@ flashcardSchema.methods.canUseInExercise = function (exerciseType) {
             return !this.isMultipleChoiceExercise;
         case "listen-and-fill":
             return !this.isListenAndFillExercise;
-        case "listen-and-choose": // ✅ ПІДТВЕРДЖЕНО: нова вправа
+        case "listen-and-choose":
             return !this.isListenAndChooseExercise;
         case "reading-comprehension":
             return !this.isReadingComprehensionExercise;
-        case "dialog":
-            // Діалог завжди можна повторювати
-            return true;
         default:
             return true;
     }
 };
 
-// ✅ ПІДТВЕРДЖЕНО: Отримання прогресу слова у відсотках (тільки основні вправи, тепер 4)
+// Отримання прогресу слова у відсотках (тільки основні вправи, тепер 4)
 flashcardSchema.methods.getProgress = function () {
     const completed = [
         this.isSentenceCompletionExercise,
         this.isMultipleChoiceExercise,
         this.isListenAndFillExercise,
-        this.isListenAndChooseExercise, // ✅ ВКЛЮЧЕНО нову вправу
+        this.isListenAndChooseExercise,
     ].filter(Boolean).length;
 
-    return Math.round((completed / 4) * 100); // ✅ ОНОВЛЕНО: тепер 4 основні вправи
+    return Math.round((completed / 4) * 100);
 };
 
-// ✅ ПІДТВЕРДЖЕНО: Отримання інформації про прогрес (включає нову вправу)
+// Отримання інформації про прогрес (включає нову вправу)
 flashcardSchema.methods.getProgressInfo = function () {
     return {
         status: this.status,
@@ -292,7 +259,7 @@ flashcardSchema.methods.getProgressInfo = function () {
             sentenceCompletion: this.isSentenceCompletionExercise,
             multipleChoice: this.isMultipleChoiceExercise,
             listenAndFill: this.isListenAndFillExercise,
-            listenAndChoose: this.isListenAndChooseExercise, // ✅ ДОДАНО: нова вправа
+            listenAndChoose: this.isListenAndChooseExercise,
             readingComprehension: this.isReadingComprehensionExercise,
         },
         lastReviewedAt: this.lastReviewedAt,
@@ -301,7 +268,7 @@ flashcardSchema.methods.getProgressInfo = function () {
     };
 };
 
-// ✅ ПІДТВЕРДЖЕНО: Логіка reading comprehension з НЕГАЙНИМ позначенням слів як використаних - тільки learning картки
+// Логіка reading comprehension з НЕГАЙНИМ позначенням слів як використаних - тільки learning картки
 flashcardSchema.statics.getWordsForReadingComprehensionWithRotationInfo =
     async function (
         userId,
@@ -310,13 +277,9 @@ flashcardSchema.statics.getWordsForReadingComprehensionWithRotationInfo =
         sessionExcludeIds = []
     ) {
         try {
-            console.log(
-                `🔍 Getting ${requestedCount} words for RC: userId=${userId}, categoryId=${categoryId}, sessionExcluded=${sessionExcludeIds.length}`
-            );
-
             const baseQuery = {
                 userId,
-                status: "learning", // ✅ ПІДТВЕРДЖЕНО: тільки learning картки
+                status: "learning",
             };
 
             // Фільтруємо по категорії
@@ -328,19 +291,11 @@ flashcardSchema.statics.getWordsForReadingComprehensionWithRotationInfo =
                 }
             }
 
-            console.log(
-                `📋 Base query for category (learning only):`,
-                baseQuery
-            );
-
             // КРОК 1: Отримуємо ВСІ learning слова в категорії для перевірки ротації
             const allLearningWordsInCategory = await this.find(baseQuery);
-            console.log(
-                `📊 Total learning words in category: ${allLearningWordsInCategory.length}`
-            );
 
             if (allLearningWordsInCategory.length === 0) {
-                console.warn(`⚠️ No learning words found in category`);
+                console.warn(`No learning words found in category`);
                 return {
                     words: [],
                     wasRotationApplied: false,
@@ -350,7 +305,7 @@ flashcardSchema.statics.getWordsForReadingComprehensionWithRotationInfo =
 
             if (allLearningWordsInCategory.length < requestedCount) {
                 console.warn(
-                    `⚠️ Not enough learning words in category: ${allLearningWordsInCategory.length} < ${requestedCount}`
+                    `Not enough learning words in category: ${allLearningWordsInCategory.length} < ${requestedCount}`
                 );
                 return {
                     words: allLearningWordsInCategory.slice(0, requestedCount),
@@ -367,27 +322,11 @@ flashcardSchema.statics.getWordsForReadingComprehensionWithRotationInfo =
                         !sessionExcludeIds.includes(word._id.toString())
                 );
 
-            console.log(
-                `✨ Available learning words before rotation check: ${availableWordsBeforeRotation.length} (need ${requestedCount})`
-            );
-
             let wasRotationApplied = false;
             let availableWords = availableWordsBeforeRotation;
 
             // УМОВА РОТАЦІЇ: якщо доступних слів менше ніж потрібно для кроку
             if (availableWordsBeforeRotation.length < requestedCount) {
-                console.log(
-                    `🔄 ROTATION NEEDED: only ${availableWordsBeforeRotation.length} words available, need ${requestedCount}`
-                );
-
-                // ОБНУЛЯЄМО ВСІ LEARNING СЛОВА В КАТЕГОРІЇ (без врахування sessionExcludeIds)
-                const resetResult = await this.updateMany(baseQuery, {
-                    $set: { isReadingComprehensionExercise: false },
-                });
-
-                console.log(
-                    `✅ ROTATION APPLIED: Reset ${resetResult.modifiedCount} learning words in category`
-                );
                 wasRotationApplied = true;
 
                 // Тепер отримуємо всі доступні слова після ротації
@@ -395,16 +334,12 @@ flashcardSchema.statics.getWordsForReadingComprehensionWithRotationInfo =
                 availableWords = allWordsAfterRotation.filter(
                     (word) => !sessionExcludeIds.includes(word._id.toString())
                 );
-
-                console.log(
-                    `🎲 Available learning words after rotation: ${availableWords.length}`
-                );
             }
 
             // КРОК 3: Вибираємо слова для поточного кроку
             if (availableWords.length < requestedCount) {
                 console.warn(
-                    `⚠️ Still not enough learning words after rotation: ${availableWords.length} < ${requestedCount}`
+                    `Still not enough learning words after rotation: ${availableWords.length} < ${requestedCount}`
                 );
                 return {
                     words: availableWords.slice(0, requestedCount),
@@ -417,39 +352,13 @@ flashcardSchema.statics.getWordsForReadingComprehensionWithRotationInfo =
             const shuffled = shuffleArray(availableWords);
             const selectedWords = shuffled.slice(0, requestedCount);
 
-            console.log(
-                `🎯 Selected ${selectedWords.length} learning words for RC (shuffled):`,
-                selectedWords.map((w) => w.text)
-            );
-
             // КЛЮЧОВА ЗМІНА: НЕГАЙНО позначаємо вибрані слова як використані
             const selectedWordIds = selectedWords.map((word) => word._id);
-
-            const updateResult = await this.updateMany(
-                { _id: { $in: selectedWordIds } },
-                {
-                    $set: {
-                        isReadingComprehensionExercise: true,
-                        lastReviewedAt: new Date(),
-                    },
-                }
-            );
-
-            console.log(
-                `🏷️ IMMEDIATELY marked ${updateResult.modifiedCount} learning words as used in Reading Comprehension`
-            );
 
             // Populate categoryId для selectedWords та оновлюємо їх стан
             const updatedSelectedWords = await this.find({
                 _id: { $in: selectedWordIds },
             }).populate("categoryId", "name color");
-
-            console.log(
-                `🔄 Updated selected learning words status:`,
-                updatedSelectedWords.map(
-                    (w) => `${w.text}: ${w.isReadingComprehensionExercise}`
-                )
-            );
 
             // КРОК 4: Отримуємо АКТУАЛЬНІ дані всіх learning слів категорії для ExerciseResult
             const finalAllCategoryWords = await this.find(baseQuery).populate(
@@ -464,14 +373,14 @@ flashcardSchema.statics.getWordsForReadingComprehensionWithRotationInfo =
             };
         } catch (error) {
             console.error(
-                "❌ Error getting learning words for reading comprehension:",
+                "Error getting learning words for reading comprehension:",
                 error
             );
             throw error;
         }
     };
 
-// ✅ ПІДТВЕРДЖЕНО: Отримання слів для конкретної вправи - тільки learning картки (включаючи нову вправу)
+// Отримання слів для конкретної вправи - тільки learning картки (включаючи нову вправу)
 flashcardSchema.statics.getWordsForExercise = async function (
     userId,
     exerciseType,
@@ -491,44 +400,17 @@ flashcardSchema.statics.getWordsForExercise = async function (
             return result.words;
         }
 
-        // ✅ ПІДТВЕРДЖЕНО: Логіка для діалогу - тільки learning картки з рандомізацією
-        if (exerciseType === "dialog") {
-            const baseQuery = {
-                userId,
-                status: "learning", // ✅ ПІДТВЕРДЖЕНО: тільки learning картки
-            };
-
-            if (excludeIds.length > 0) {
-                baseQuery._id = { $nin: excludeIds };
-            }
-
-            const learningWords = await this.find(baseQuery)
-                .populate("categoryId", "name color")
-                .sort({ lastReviewedAt: 1 });
-
-            // Перемішуємо learning слова
-            const shuffledWords = shuffleArray(learningWords);
-            const finalWords = shuffledWords.slice(0, limit);
-
-            console.log(
-                `🎲 getWordsForExercise: Found ${finalWords.length} learning words for ${exerciseType} (shuffled):`,
-                finalWords.map((w) => w.text)
-            );
-
-            return finalWords;
-        }
-
-        // ✅ ПІДТВЕРДЖЕНО: Логіка для основних вправ - тільки learning картки з рандомізацією (включаючи нову вправу)
+        // Логіка для основних вправ - тільки learning картки з рандомізацією (включаючи нову вправу)
         const learningQuery = {
             userId,
-            status: "learning", // ✅ ПІДТВЕРДЖЕНО: тільки learning картки
+            status: "learning",
         };
 
         if (excludeIds.length > 0) {
             learningQuery._id = { $nin: excludeIds };
         }
 
-        // ✅ ПІДТВЕРДЖЕНО: Додаємо умову що слово ще не пройшло цю вправу (включаючи нову)
+        // Додаємо умову що слово ще не пройшло цю вправу (включаючи нову)
         switch (exerciseType) {
             case "sentence-completion":
                 learningQuery.isSentenceCompletionExercise = false;
@@ -539,12 +421,12 @@ flashcardSchema.statics.getWordsForExercise = async function (
             case "listen-and-fill":
                 learningQuery.isListenAndFillExercise = false;
                 break;
-            case "listen-and-choose": // ✅ ПІДТВЕРДЖЕНО: нова вправа
+            case "listen-and-choose":
                 learningQuery.isListenAndChooseExercise = false;
                 break;
         }
 
-        // ✅ ПІДТВЕРДЖЕНО: Спочатку отримуємо всі learning слова, потім перемішуємо
+        // Спочатку отримуємо всі learning слова, потім перемішуємо
         let learningWords = await this.find(learningQuery)
             .populate("categoryId", "name color")
             .sort({ lastReviewedAt: 1 });
@@ -553,11 +435,6 @@ flashcardSchema.statics.getWordsForExercise = async function (
         learningWords = shuffleArray(learningWords);
         let words = learningWords.slice(0, limit);
 
-        console.log(
-            `🎲 getWordsForExercise: Found ${words.length} learning words for ${exerciseType} (shuffled):`,
-            words.map((w) => w.text)
-        );
-
         return words;
     } catch (error) {
         console.error("Error getting learning words for exercise:", error);
@@ -565,7 +442,7 @@ flashcardSchema.statics.getWordsForExercise = async function (
     }
 };
 
-// ✅ ПІДТВЕРДЖЕНО: Отримання статистики прогресу користувача (включаючи нову вправу)
+// Отримання статистики прогресу користувача (включаючи нову вправу)
 flashcardSchema.statics.getLearningStats = async function (userId) {
     try {
         const [learningCount, reviewCount, totalCount] = await Promise.all([
@@ -574,7 +451,7 @@ flashcardSchema.statics.getLearningStats = async function (userId) {
             this.countDocuments({ userId }),
         ]);
 
-        // ✅ ПІДТВЕРДЖЕНО: Детальна статистика по вправах (включаючи нову)
+        // Детальна статистика по вправах (включаючи нову)
         const exerciseStats = await this.aggregate([
             { $match: { userId } },
             {
@@ -592,7 +469,6 @@ flashcardSchema.statics.getLearningStats = async function (userId) {
                         $sum: { $cond: ["$isListenAndFillExercise", 1, 0] },
                     },
                     totalListenAndChoose: {
-                        // ✅ ПІДТВЕРДЖЕНО: нова вправа
                         $sum: { $cond: ["$isListenAndChooseExercise", 1, 0] },
                     },
                     totalReadingComprehension: {
@@ -608,7 +484,7 @@ flashcardSchema.statics.getLearningStats = async function (userId) {
             totalSentenceCompletion: 0,
             totalMultipleChoice: 0,
             totalListenAndFill: 0,
-            totalListenAndChoose: 0, // ✅ ПІДТВЕРДЖЕНО: нова вправа
+            totalListenAndChoose: 0,
             totalReadingComprehension: 0,
         };
 
@@ -620,7 +496,7 @@ flashcardSchema.statics.getLearningStats = async function (userId) {
                 sentenceCompletion: stats.totalSentenceCompletion,
                 multipleChoice: stats.totalMultipleChoice,
                 listenAndFill: stats.totalListenAndFill,
-                listenAndChoose: stats.totalListenAndChoose, // ✅ ПІДТВЕРДЖЕНО: нова вправа
+                listenAndChoose: stats.totalListenAndChoose,
                 readingComprehension: stats.totalReadingComprehension,
             },
         };
@@ -660,7 +536,7 @@ flashcardSchema.index({ userId: 1, status: 1 });
 flashcardSchema.index({ userId: 1, categoryId: 1 });
 flashcardSchema.index({ userId: 1, lastReviewedAt: 1 });
 
-// ✅ ПІДТВЕРДЖЕНО: Індекси для вправ (включаючи нову вправу)
+// Індекси для вправ
 flashcardSchema.index({
     userId: 1,
     status: 1,
@@ -668,7 +544,7 @@ flashcardSchema.index({
 });
 flashcardSchema.index({ userId: 1, status: 1, isMultipleChoiceExercise: 1 });
 flashcardSchema.index({ userId: 1, status: 1, isListenAndFillExercise: 1 });
-flashcardSchema.index({ userId: 1, status: 1, isListenAndChooseExercise: 1 }); // ✅ ПІДТВЕРДЖЕНО: індекс для нової вправи
+flashcardSchema.index({ userId: 1, status: 1, isListenAndChooseExercise: 1 });
 flashcardSchema.index({ userId: 1, isReadingComprehensionExercise: 1 });
 
 const Flashcard = mongoose.model("Flashcard", flashcardSchema);
